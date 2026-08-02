@@ -14,6 +14,8 @@ class MapControls extends StatelessWidget {
     required this.onZoomIn,
     required this.onZoomOut,
     required this.onLayerToggle,
+    required this.isFollowing,
+    required this.onFollowToggle,
     super.key,
   });
 
@@ -22,6 +24,8 @@ class MapControls extends StatelessWidget {
   final VoidCallback onZoomIn;
   final VoidCallback onZoomOut;
   final ValueChanged<MapLayerType> onLayerToggle;
+  final bool isFollowing;
+  final VoidCallback onFollowToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -47,9 +51,16 @@ class MapControls extends StatelessWidget {
 
         const SizedBox(height: 8),
 
-        // ── Compass ──
+        // ── Compass & Follow ──
         _ControlPanel(
           children: [
+            _LayerToggle(
+              icon: Icons.my_location,
+              label: 'Follow Mode',
+              isActive: isFollowing,
+              onTap: onFollowToggle,
+            ),
+            const _ControlDivider(),
             _ControlButton(
               icon: Icons.navigation,
               tooltip: 'North Up',

@@ -11,9 +11,14 @@ import 'package:maplibre/maplibre.dart';
 
 import 'package:skynav/core/constants/map_constants.dart';
 import 'package:skynav/core/theme/app_theme.dart';
+import 'package:skynav/features/flight_plan/domain/entities/waypoint.dart';
+import 'package:skynav/features/flight_plan/presentation/bloc/flight_plan_bloc.dart';
 import 'package:skynav/features/map/presentation/bloc/map_bloc.dart';
 import 'package:skynav/features/map/presentation/widgets/map_controls.dart';
 import 'package:skynav/features/map/presentation/widgets/map_info_bar.dart';
+import 'package:skynav/features/telemetry/presentation/bloc/telemetry_bloc.dart';
+import 'package:skynav/features/telemetry/presentation/widgets/telemetry_panel.dart';
+import 'package:skynav/features/traffic/presentation/bloc/traffic_bloc.dart';
 
 /// The main map page — home screen of SkyNav.
 class MapPage extends StatefulWidget {
@@ -35,25 +40,47 @@ class _MapPageState extends State<MapPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: BlocConsumer<MapBloc, MapState>(
-        listener: (context, state) {
-          if (state is MapReady) {
-             _mapController?.animateCamera(
-               center: Geographic(lat: state.center.latitude, lon: state.center.longitude),
-             );
-          }
-        },
-        builder: (context, state) {
-          return switch (state) {
-            MapInitial() || MapLoading() => const _MapLoadingView(),
-            MapReady() => _MapReadyView(
+      body: MultiBlocListener(
+        listeners: [
+          BlocListener<MapBloc, MapState>(
+            listener: (context, state) {
+              if (state is MapReady) {
+                _mapController?.animateCamera(
+                  center: Geographic(
+                    lat: state.center.latitude,
+                    lon: state.center.longitude,
+                  ),
+                );
+              }
+            },
+          ),
+          BlocListener<TelemetryBloc, TelemetryState>(
+            listener: (context, state) {
+              if (state is TelemetryActive && state.followModeEnabled && _mapController != null) {
+                _mapController?.animateCamera(
+                  center: Geographic(
+                    lat: state.data.latitude,
+                    lon: state.data.longitude,
+                  ),
+                  zoom: 12,
+                );
+              }
+            },
+          ),
+        ],
+        child: BlocBuilder<MapBloc, MapState>(
+          builder: (context, state) {
+            return switch (state) {
+              MapInitial() || MapLoading() => const _MapLoadingView(),
+              MapReady() => _MapReadyView(
                 state: state,
                 onMapCreated: (controller) => _mapController = controller,
                 mapController: _mapController,
               ),
-            MapError(:final message) => _MapErrorView(message: message),
-          };
-        },
+              MapError(:final message) => _MapErrorView(message: message),
+            };
+          },
+        ),
       ),
     );
   }
@@ -73,10 +100,7 @@ class _MapLoadingView extends StatelessWidget {
           SizedBox(height: 16),
           Text(
             'Initializing SkyNav...',
-            style: TextStyle(
-              color: AppTheme.textSecondary,
-              fontSize: 16,
-            ),
+            style: TextStyle(color: AppTheme.textSecondary, fontSize: 16),
           ),
         ],
       ),
@@ -96,16 +120,9 @@ class _MapErrorView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
-            Icons.error_outline,
-            color: AppTheme.error,
-            size: 48,
-          ),
+          const Icon(Icons.error_outline, color: AppTheme.error, size: 48),
           const SizedBox(height: 16),
-          Text(
-            'Map Error',
-            style: Theme.of(context).textTheme.headlineMedium,
-          ),
+          Text('Map Error', style: Theme.of(context).textTheme.headlineMedium),
           const SizedBox(height: 8),
           Text(
             message,
@@ -143,92 +160,247 @@ class _MapReadyView extends StatelessWidget {
     return Stack(
       children: [
         // ── Main Map ──
-        MapLibreMap(
-          onMapCreated: onMapCreated,
-          options: MapOptions(
-            initCenter: Geographic(lat: state.center.latitude, lon: state.center.longitude),
-            initZoom: state.zoom,
-            minZoom: MapConstants.minZoom,
-            maxZoom: MapConstants.maxZoom,
-          ),
-          onEvent: (event) async {
-            if (event is MapEventCameraIdle && mapController != null) {
-              final bounds = mapController!.getVisibleRegion();
-              final camera = mapController!.camera;
-              
-              if (camera != null) {
-                if (context.mounted) {
-                  context.read<MapBloc>().add(MapMoved(
-                    center: LatLng(camera.center.lat, camera.center.lon),
-                    zoom: camera.zoom,
-                    bounds: MapBounds(
-                      southWest: LatLng(bounds.latitudeSouth, bounds.longitudeWest),
-                      northEast: LatLng(bounds.latitudeNorth, bounds.longitudeEast),
-                    ),
-                  ));
-                }
-              }
-            }
-          },
-          children: [
-            if (state.visibleLayers.contains(MapLayerType.airports))
-              WidgetLayer(
-                allowInteraction: true,
-                markers: state.airports.map((airport) {
-                  return Marker(
-                    point: Geographic(lat: airport.latitude, lon: airport.longitude),
-                    size: const Size(32, 32),
-                    child: GestureDetector(
-                      onTap: () {
-                        // TODO: Show airport details
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('${airport.icao} - ${airport.name}')),
-                        );
-                      },
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: AppTheme.backgroundSecondary,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: AppTheme.accentPrimary, width: 2),
-                        ),
-                        child: const Icon(
-                          Icons.local_airport,
-                          color: AppTheme.accentPrimary,
-                          size: 16,
+        BlocBuilder<FlightPlanBloc, FlightPlanState>(
+          builder: (context, flightPlanState) {
+            final activePlan = flightPlanState is FlightPlanActive
+                ? flightPlanState.flightPlan
+                : null;
+
+            final layers = <Layer>[];
+            if (activePlan != null && activePlan.waypoints.length > 1) {
+              layers.add(
+                PolylineLayer(
+                  polylines: [
+                    Feature<LineString>(
+                      geometry: LineString.from(
+                        activePlan.waypoints.map(
+                          (wp) =>
+                              Position.create(x: wp.longitude, y: wp.latitude),
                         ),
                       ),
                     ),
-                  );
-                }).toList(),
+                  ],
+                  color: const Color(0xFFFF00FF), // Aviation Magenta
+                  width: 4,
+                ),
+              );
+            }
+
+            return MapLibreMap(
+              onMapCreated: onMapCreated,
+              options: MapOptions(
+                initCenter: Geographic(
+                  lat: state.center.latitude,
+                  lon: state.center.longitude,
+                ),
+                initZoom: state.zoom,
+                minZoom: MapConstants.minZoom,
+                maxZoom: MapConstants.maxZoom,
               ),
-          ],
+              layers: layers,
+              onEvent: (event) async {
+                if (event is MapEventClick) {
+                  final position = event.point;
+                  context.read<FlightPlanBloc>().add(
+                    WaypointAdded(
+                      Waypoint(
+                        latitude: position.lat,
+                        longitude: position.lon,
+                        name: 'Custom',
+                      ),
+                    ),
+                  );
+                }
+
+                if (event is MapEventCameraIdle && mapController != null) {
+                  final bounds = mapController!.getVisibleRegion();
+                  final camera = mapController!.camera;
+
+                  if (camera != null) {
+                    if (context.mounted) {
+                      context.read<MapBloc>().add(
+                        MapMoved(
+                          center: LatLng(camera.center.lat, camera.center.lon),
+                          zoom: camera.zoom,
+                          bounds: MapBounds(
+                            southWest: LatLng(
+                              bounds.latitudeSouth,
+                              bounds.longitudeWest,
+                            ),
+                            northEast: LatLng(
+                              bounds.latitudeNorth,
+                              bounds.longitudeEast,
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+                  }
+                }
+              },
+              children: [
+                if (state.visibleLayers.contains(MapLayerType.airports))
+                  WidgetLayer(
+                    allowInteraction: true,
+                    markers: state.airports.map((airport) {
+                      return Marker(
+                        point: Geographic(
+                          lat: airport.latitude,
+                          lon: airport.longitude,
+                        ),
+                        size: const Size(32, 32),
+                        child: GestureDetector(
+                          onTap: () {
+                            // Add airport to flight plan
+                            context.read<FlightPlanBloc>().add(
+                              WaypointAdded(
+                                Waypoint(
+                                  latitude: airport.latitude,
+                                  longitude: airport.longitude,
+                                  name: airport.icao,
+                                  elevation: airport.elevation,
+                                ),
+                              ),
+                            );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Added ${airport.icao} to route'),
+                              ),
+                            );
+                          },
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: AppTheme.backgroundSecondary,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: AppTheme.accentPrimary,
+                                width: 2,
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.local_airport,
+                              color: AppTheme.accentPrimary,
+                              size: 16,
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                BlocBuilder<TelemetryBloc, TelemetryState>(
+                  builder: (context, telemetryState) {
+                    if (telemetryState is TelemetryActive) {
+                      return WidgetLayer(
+                        markers: [
+                          Marker(
+                            point: Geographic(
+                              lat: telemetryState.data.latitude,
+                              lon: telemetryState.data.longitude,
+                            ),
+                            size: const Size(48, 48),
+                            child: Transform.rotate(
+                              angle: (telemetryState.data.trueTrack * 3.1415926535) / 180.0,
+                              child: const Icon(
+                                Icons.flight,
+                                color: Colors.blueAccent,
+                                size: 36,
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+                if (state.visibleLayers.contains(MapLayerType.traffic))
+                  BlocBuilder<TrafficBloc, TrafficState>(
+                    builder: (context, trafficState) {
+                      if (trafficState is TrafficActive) {
+                        return WidgetLayer(
+                          markers: trafficState.targets.map((target) {
+                            return Marker(
+                              point: Geographic(
+                                lat: target.latitude,
+                                lon: target.longitude,
+                              ),
+                              size: const Size(64, 48),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Transform.rotate(
+                                    angle: (target.trackDegrees * 3.1415926535) / 180.0,
+                                    child: const Icon(
+                                      Icons.navigation,
+                                      color: Colors.cyanAccent,
+                                      size: 24,
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withValues(alpha: 0.6),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      '${target.callsign ?? target.icaoHex}\n${(target.altitudeFeet / 100).round().toString().padLeft(3, '0')}',
+                                      style: const TextStyle(
+                                        color: Colors.cyanAccent,
+                                        fontSize: 10,
+                                        height: 1.1,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
+              ],
+            );
+          },
         ),
 
         // ── Map Controls (top-right) ──
         Positioned(
           top: 16,
           right: 16,
-          child: MapControls(
-            currentZoom: state.zoom,
-            visibleLayers: state.visibleLayers,
-            onZoomIn: () {
-              final newZoom = (state.zoom + 1).clamp(
-                MapConstants.minZoom,
-                MapConstants.maxZoom,
+          child: BlocBuilder<TelemetryBloc, TelemetryState>(
+            builder: (context, telemetryState) {
+              final isFollowing = telemetryState is TelemetryActive && telemetryState.followModeEnabled;
+              return MapControls(
+                currentZoom: state.zoom,
+                visibleLayers: state.visibleLayers,
+                isFollowing: isFollowing,
+                onFollowToggle: () {
+                  context.read<TelemetryBloc>().add(const TelemetryFollowToggled());
+                },
+                onZoomIn: () {
+                  final newZoom = (state.zoom + 1).clamp(
+                    MapConstants.minZoom,
+                    MapConstants.maxZoom,
+                  );
+                  mapController?.animateCamera(zoom: newZoom);
+                  context.read<MapBloc>().add(MapZoomChanged(zoom: newZoom));
+                },
+                onZoomOut: () {
+                  final newZoom = (state.zoom - 1).clamp(
+                    MapConstants.minZoom,
+                    MapConstants.maxZoom,
+                  );
+                  mapController?.animateCamera(zoom: newZoom);
+                  context.read<MapBloc>().add(MapZoomChanged(zoom: newZoom));
+                },
+                onLayerToggle: (layer) {
+                  context.read<MapBloc>().add(MapLayerToggled(layer: layer));
+                },
               );
-              mapController?.animateCamera(zoom: newZoom);
-              context.read<MapBloc>().add(MapZoomChanged(zoom: newZoom));
-            },
-            onZoomOut: () {
-              final newZoom = (state.zoom - 1).clamp(
-                MapConstants.minZoom,
-                MapConstants.maxZoom,
-              );
-              mapController?.animateCamera(zoom: newZoom);
-              context.read<MapBloc>().add(MapZoomChanged(zoom: newZoom));
-            },
-            onLayerToggle: (layer) {
-              context.read<MapBloc>().add(MapLayerToggled(layer: layer));
             },
           ),
         ),
@@ -238,9 +410,17 @@ class _MapReadyView extends StatelessWidget {
           left: 0,
           right: 0,
           bottom: 0,
-          child: MapInfoBar(
-            center: state.center,
-            zoom: state.zoom,
+          child: BlocBuilder<FlightPlanBloc, FlightPlanState>(
+            builder: (context, flightPlanState) {
+              final activePlan = flightPlanState is FlightPlanActive
+                  ? flightPlanState.flightPlan
+                  : null;
+              return MapInfoBar(
+                center: state.center,
+                zoom: state.zoom,
+                activePlan: activePlan,
+              );
+            },
           ),
         ),
 
@@ -258,11 +438,7 @@ class _MapReadyView extends StatelessWidget {
             child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.flight,
-                  color: AppTheme.accentPrimary,
-                  size: 20,
-                ),
+                Icon(Icons.flight, color: AppTheme.accentPrimary, size: 20),
                 SizedBox(width: 8),
                 Text(
                   'SkyNav',
@@ -277,8 +453,14 @@ class _MapReadyView extends StatelessWidget {
             ),
           ),
         ),
+
+        // ── Telemetry Panel (left-center) ──
+        const Positioned(
+          left: 16,
+          top: 80,
+          child: TelemetryPanel(),
+        ),
       ],
     );
   }
 }
-

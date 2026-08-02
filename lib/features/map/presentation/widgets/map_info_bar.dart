@@ -6,17 +6,21 @@ import 'package:latlong2/latlong.dart';
 
 import 'package:skynav/core/geo/coordinate_utils.dart';
 import 'package:skynav/core/theme/app_theme.dart';
+import 'package:skynav/core/utils/nav_math.dart';
+import 'package:skynav/features/flight_plan/domain/entities/flight_plan.dart';
 
 /// Bottom status bar displaying map information.
 class MapInfoBar extends StatelessWidget {
   const MapInfoBar({
     required this.center,
     required this.zoom,
+    this.activePlan,
     super.key,
   });
 
   final LatLng center;
   final double zoom;
+  final FlightPlan? activePlan;
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +50,21 @@ class MapInfoBar extends StatelessWidget {
             icon: Icons.zoom_in,
             label: 'Z${zoom.toStringAsFixed(1)}',
           ),
+
+          if (activePlan != null && activePlan!.waypoints.length > 1) ...[
+            const SizedBox(width: 24),
+            _InfoChip(
+              icon: Icons.route,
+              label: '${activePlan!.totalDistanceNm.toStringAsFixed(1)} NM',
+              color: const Color(0xFFFF00FF),
+            ),
+            const SizedBox(width: 16),
+            _InfoChip(
+              icon: Icons.timer,
+              label: 'ETE ${NavMath.formatEte(activePlan!.estimatedTimeEnrouteMinutes)}',
+              color: const Color(0xFFFF00FF),
+            ),
+          ],
 
           const Spacer(),
 
