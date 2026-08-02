@@ -1,0 +1,10 @@
+Package: skynav
+Version: 0.1.0
+Section: utils
+Priority: optional
+Architecture: amd64
+Depends: libsqlite3-0
+Maintainer: SkyNav Team <support@skynav.example.com>
+Description: Offline Aviation Navigation Platform
+ A production-grade aviation navigation platform that runs as a dedicated Ubuntu desktop application.
+ Includes offline mapping, terrain data, and real-time telemetry processing.

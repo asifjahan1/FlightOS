@@ -1,0 +1,81 @@
+name: skynav
+description: Offline-first aviation navigation platform for Linux desktop.
+version: 0.1.0+1
+publish_to: none
+
+environment:
+  sdk: ^3.12.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # ── Map Engine ──
+  maplibre: ^0.3.5
+
+  # ── Database (Drift / SQLite) ──
+  drift: ^2.22.0
+  sqlite3_flutter_libs: ^0.6.0+eol
+  sqlite3: ^2.0.0
+  path_provider: ^2.1.0
+  path: ^1.9.0
+
+  # ── State Management (BLoC) ──
+  flutter_bloc: ^9.0.0
+  bloc: ^9.0.0
+  equatable: ^2.0.0
+
+  # ── Dependency Injection ──
+  get_it: ^9.2.1
+  injectable: ^3.0.0
+
+  # ── Navigation / Routing ──
+  go_router: ^17.3.0
+
+  # ── Geo Math ──
+  latlong2: ^0.9.0
+
+  # ── Serialization ──
+  freezed_annotation: ^3.1.0
+  json_annotation: ^4.9.0
+
+  # ── Window Management (Kiosk) ──
+  window_manager: ^0.5.2
+
+  # ── Networking (for when online) ──
+  dio: ^5.7.0
+
+  # ── Logging ──
+  logger: ^2.5.0
+
+  # ── Utilities ──
+  collection: ^1.18.0
+  intl: ^0.20.0
+  rxdart: ^0.28.0
+  uuid: ^4.5.0
+  crypto: ^3.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # ── Code Generation ──
+  build_runner: ^2.4.0
+  drift_dev: ^2.22.0
+  freezed: ^3.2.5
+  json_serializable: ^6.9.0
+  injectable_generator: ^3.0.2
+
+  # ── Testing ──
+  bloc_test: any
+  mocktail: any
+
+  # ── Linting ──
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/icons/
+    - assets/fonts/

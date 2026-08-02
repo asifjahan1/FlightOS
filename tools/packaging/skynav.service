@@ -1,0 +1,20 @@
+[Unit]
+Description=SkyNav Aviation Navigation Platform
+After=network.target display-manager.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=skynav
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/skynav/.Xauthority
+ExecStart=/opt/skynav/bin/skynav
+Restart=always
+RestartSec=5
+# Watchdog configuration for high availability
+WatchdogSec=15s
+# Limit memory if needed, but Flutter handles itself well
+MemoryLimit=1024M
+
+[Install]
+WantedBy=graphical.target

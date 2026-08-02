@@ -1,0 +1,19 @@
+#!/bin/bash
+# postinst script for skynav
+
+set -e
+
+if [ "$1" = "configure" ]; then
+    # Create the data directory
+    mkdir -p /opt/skynav/data
+    chmod 777 /opt/skynav/data
+
+    # Set up systemd service if running systemd
+    if [ -d /run/systemd/system ]; then
+        cp /opt/skynav/tools/packaging/skynav.service /etc/systemd/system/ || true
+        systemctl daemon-reload || true
+        # Do not enable by default, let the user configure kiosk mode
+    fi
+fi
+
+exit 0

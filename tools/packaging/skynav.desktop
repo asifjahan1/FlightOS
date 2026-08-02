@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=SkyNav
+Comment=Offline Aviation Navigation Platform
+Exec=/opt/skynav/bin/skynav
+Icon=/opt/skynav/assets/icons/skynav.png
+Terminal=false
+Categories=Education;Science;Utility;
+Keywords=aviation;navigation;flight;map;pilot;
+StartupWMClass=skynav
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Delay=2

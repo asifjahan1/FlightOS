@@ -1,0 +1,16 @@
+#!/bin/bash
+# prerm script for skynav
+
+set -e
+
+if [ "$1" = "remove" ]; then
+    # Stop and disable service if running systemd
+    if [ -d /run/systemd/system ]; then
+        systemctl stop skynav.service || true
+        systemctl disable skynav.service || true
+        rm -f /etc/systemd/system/skynav.service || true
+        systemctl daemon-reload || true
+    fi
+fi
+
+exit 0

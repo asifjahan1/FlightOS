@@ -1,0 +1,35 @@
+/// SkyNav application root widget.
+///
+/// Configures the MaterialApp with the aviation dark theme,
+/// BLoC providers, and routing.
+library;
+
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'package:skynav/core/theme/app_theme.dart';
+import 'package:skynav/features/map/presentation/bloc/map_bloc.dart';
+import 'package:skynav/features/map/presentation/pages/map_page.dart';
+import 'package:skynav/injection.dart';
+
+/// Root application widget.
+class SkyNavApp extends StatelessWidget {
+  const SkyNavApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<MapBloc>(
+          create: (_) => sl<MapBloc>()..add(const MapInitialized()),
+        ),
+      ],
+      child: MaterialApp(
+        title: 'SkyNav',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.darkTheme,
+        home: const MapPage(),
+      ),
+    );
+  }
+}
