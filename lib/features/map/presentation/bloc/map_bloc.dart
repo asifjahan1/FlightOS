@@ -16,9 +16,12 @@ library;
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:injectable/injectable.dart';
 import 'package:latlong2/latlong.dart';
 
 import 'package:skynav/core/constants/map_constants.dart';
+import 'package:skynav/features/airport/domain/entities/airport.dart';
+import 'package:skynav/features/airport/domain/repositories/airport_repository.dart';
 
 // ── Events ──
 
@@ -113,6 +116,7 @@ class MapReady extends MapState {
     required this.bounds,
     required this.visibleLayers,
     this.tilesLoaded = false,
+    this.airports = const [],
   });
 
   final LatLng center;
@@ -120,6 +124,7 @@ class MapReady extends MapState {
   final MapBounds bounds;
   final Set<MapLayerType> visibleLayers;
   final bool tilesLoaded;
+  final List<Airport> airports;
 
   MapReady copyWith({
     LatLng? center,
@@ -127,6 +132,7 @@ class MapReady extends MapState {
     MapBounds? bounds,
     Set<MapLayerType>? visibleLayers,
     bool? tilesLoaded,
+    List<Airport>? airports,
   }) {
     return MapReady(
       center: center ?? this.center,
@@ -134,11 +140,12 @@ class MapReady extends MapState {
       bounds: bounds ?? this.bounds,
       visibleLayers: visibleLayers ?? this.visibleLayers,
       tilesLoaded: tilesLoaded ?? this.tilesLoaded,
+      airports: airports ?? this.airports,
     );
   }
 
   @override
-  List<Object?> get props => [center, zoom, bounds, visibleLayers, tilesLoaded];
+  List<Object?> get props => [center, zoom, bounds, visibleLayers, tilesLoaded, airports];
 }
 
 /// Map failed to load.
@@ -187,14 +194,17 @@ enum MapLayerType {
 // ── BLoC ──
 
 /// Map BLoC implementation.
+@injectable
 class MapBloc extends Bloc<MapEvent, MapState> {
-  MapBloc() : super(const MapInitial()) {
+
+  MapBloc(this._airportRepository) : super(const MapInitial()) {
     on<MapInitialized>(_onInitialized);
     on<MapMoved>(_onMoved);
     on<MapLayerToggled>(_onLayerToggled);
     on<MapCenterOnLocation>(_onCenterOnLocation);
     on<MapZoomChanged>(_onZoomChanged);
   }
+  final AirportRepository _airportRepository;
 
   Future<void> _onInitialized(
     MapInitialized event,
@@ -221,16 +231,33 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     }
   }
 
-  void _onMoved(
+  Future<void> _onMoved(
     MapMoved event,
     Emitter<MapState> emit,
-  ) {
+  ) async {
     final currentState = state;
     if (currentState is MapReady) {
+      List<Airport>? newAirports;
+
+      // Only fetch airports if zoomed in enough to prevent clutter/perf issues.
+      if (event.zoom > 6.0 && currentState.visibleLayers.contains(MapLayerType.airports)) {
+        try {
+          newAirports = await _airportRepository.getAirportsInBoundingBox(
+            minLat: event.bounds.southWest.latitude,
+            maxLat: event.bounds.northEast.latitude,
+            minLon: event.bounds.southWest.longitude,
+            maxLon: event.bounds.northEast.longitude,
+          );
+        } catch (_) {
+          // Ignore fetch errors for now
+        }
+      }
+
       emit(currentState.copyWith(
         center: event.center,
         zoom: event.zoom,
         bounds: event.bounds,
+        airports: newAirports,
       ));
     }
   }

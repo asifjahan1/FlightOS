@@ -6,6 +6,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:maplibre/maplibre.dart';
 
 import 'package:skynav/core/constants/map_constants.dart';
@@ -152,9 +153,55 @@ class _MapReadyView extends StatelessWidget {
           ),
           onEvent: (event) async {
             if (event is MapEventCameraIdle && mapController != null) {
-               // Update Bloc with new bounds if needed.
+              final bounds = mapController!.getVisibleRegion();
+              final camera = mapController!.camera;
+              
+              if (camera != null) {
+                if (context.mounted) {
+                  context.read<MapBloc>().add(MapMoved(
+                    center: LatLng(camera.center.lat, camera.center.lon),
+                    zoom: camera.zoom,
+                    bounds: MapBounds(
+                      southWest: LatLng(bounds.latitudeSouth, bounds.longitudeWest),
+                      northEast: LatLng(bounds.latitudeNorth, bounds.longitudeEast),
+                    ),
+                  ));
+                }
+              }
             }
           },
+          children: [
+            if (state.visibleLayers.contains(MapLayerType.airports))
+              WidgetLayer(
+                allowInteraction: true,
+                markers: state.airports.map((airport) {
+                  return Marker(
+                    point: Geographic(lat: airport.latitude, lon: airport.longitude),
+                    size: const Size(32, 32),
+                    child: GestureDetector(
+                      onTap: () {
+                        // TODO: Show airport details
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('${airport.icao} - ${airport.name}')),
+                        );
+                      },
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: AppTheme.backgroundSecondary,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppTheme.accentPrimary, width: 2),
+                        ),
+                        child: const Icon(
+                          Icons.local_airport,
+                          color: AppTheme.accentPrimary,
+                          size: 16,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+          ],
         ),
 
         // ── Map Controls (top-right) ──

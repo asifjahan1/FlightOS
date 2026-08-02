@@ -1,0 +1,42 @@
+[
+  {
+    "icao": "VGHS",
+    "name": "Hazrat Shahjalal International",
+    "latitude": 23.8433,
+    "longitude": 90.4006,
+    "elevation": 30.0,
+    "type": "large_airport"
+  },
+  {
+    "icao": "KLAX",
+    "name": "Los Angeles International",
+    "latitude": 33.9425,
+    "longitude": -118.4081,
+    "elevation": 125.0,
+    "type": "large_airport"
+  },
+  {
+    "icao": "KJFK",
+    "name": "John F Kennedy International",
+    "latitude": 40.6398,
+    "longitude": -73.7789,
+    "elevation": 13.0,
+    "type": "large_airport"
+  },
+  {
+    "icao": "EGLL",
+    "name": "London Heathrow",
+    "latitude": 51.4706,
+    "longitude": -0.4619,
+    "elevation": 83.0,
+    "type": "large_airport"
+  },
+  {
+    "icao": "VGEG",
+    "name": "Shah Amanat International",
+    "latitude": 22.2496,
+    "longitude": 91.8133,
+    "elevation": 12.0,
+    "type": "medium_airport"
+  }
+]

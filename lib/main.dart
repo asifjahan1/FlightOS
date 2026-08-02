@@ -6,6 +6,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:skynav/app.dart';
+import 'package:skynav/features/airport/data/seed/airport_seeder.dart';
 import 'package:skynav/injection.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -33,6 +34,9 @@ Future<void> main() async {
 
   // Initialize dependency injection
   await configureDependencies();
+
+  // Seed initial data
+  await sl<AirportSeeder>().seedDatabaseIfEmpty();
 
   runApp(const SkyNavApp());
 }

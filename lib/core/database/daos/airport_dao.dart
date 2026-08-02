@@ -37,4 +37,19 @@ class AirportDao extends DatabaseAccessor<AppDatabase> with _$AirportDaoMixin {
       ..where((t) => t.longitude.isBetweenValues(minLon, maxLon))
     ).get();
   }
+
+  /// Get the total number of airports in the database.
+  Future<int> getAirportsCount() async {
+    final countExp = airports.icao.count();
+    final query = selectOnly(airports)..addColumns([countExp]);
+    final result = await query.getSingle();
+    return result.read(countExp) ?? 0;
+  }
+
+  /// Batch insert airports.
+  Future<void> insertAirportsBatch(List<AirportsCompanion> newAirports) async {
+    await batch((batch) {
+      batch.insertAll(airports, newAirports, mode: InsertMode.insertOrIgnore);
+    });
+  }
 }
