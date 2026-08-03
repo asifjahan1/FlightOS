@@ -24,6 +24,14 @@ import 'package:skynav/features/traffic/presentation/bloc/traffic_bloc.dart';
 import 'package:skynav/features/airspace/presentation/bloc/airspace_bloc.dart';
 import 'package:skynav/features/airspace/presentation/bloc/airspace_event.dart';
 import 'package:skynav/features/airspace/presentation/bloc/airspace_state.dart';
+import 'package:skynav/features/weather/presentation/bloc/weather_bloc.dart';
+import 'package:skynav/features/weather/presentation/bloc/weather_event.dart';
+import 'package:skynav/features/weather/domain/entities/weather_data.dart';
+import 'package:skynav/features/terrain/presentation/bloc/terrain_bloc.dart';
+import 'package:skynav/features/terrain/presentation/bloc/terrain_event.dart';
+import 'package:skynav/features/terrain/presentation/bloc/terrain_state.dart';
+import 'package:skynav/features/checklist/presentation/widgets/checklist_panel.dart';
+import 'package:skynav/features/scratchpad/presentation/widgets/scratchpad_panel.dart';
 
 /// The main map page — home screen of SkyNav.
 class MapPage extends StatefulWidget {
@@ -98,6 +106,12 @@ class _MapPageState extends State<MapPage> {
           BlocListener<MapBloc, MapState>(
             listener: (context, state) {
               if (state is MapReady) {
+                if (state.airports.isNotEmpty) {
+                  context.read<WeatherBloc>().add(FetchWeatherForAirports(
+                    state.airports.map((a) => a.icao).toList(),
+                  ));
+                }
+                
                 _mapController?.animateCamera(
                   center: Geographic(
                     lat: state.center.latitude,
@@ -115,6 +129,12 @@ class _MapPageState extends State<MapPage> {
                   latitude: state.data.latitude,
                   longitude: state.data.longitude,
                   altitude: state.data.altitudeMslFeet,
+                ));
+                // Check terrain proximity
+                context.read<TerrainBloc>().add(TerrainLocationUpdated(
+                  latitude: state.data.latitude,
+                  longitude: state.data.longitude,
+                  altitudeMsl: state.data.altitudeMslFeet,
                 ));
                 
                 if (state.followModeEnabled && _mapController != null) {
@@ -498,7 +518,61 @@ class _MapReadyView extends StatelessWidget {
           ),
         ),
 
-        // ── Info Bar (bottom) ──
+        // ── TAWS Overlay ──
+        BlocBuilder<TerrainBloc, TerrainState>(
+          builder: (context, state) {
+            if (state is TerrainUpdated && state.isTawsAlertActive) {
+              return Positioned(
+                top: 40,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.5),
+                          blurRadius: 10,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      'PULL UP\nTERRAIN TERRAIN',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 2,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }
+            return const SizedBox.shrink();
+          }
+        ),
+
+        // ── Floating Panels ──
+        Positioned(
+          top: 60,
+          right: 0,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              ScratchpadPanel(),
+              ChecklistPanel(),
+            ],
+          ),
+        ),
+
+        // ── Bottom Panel (Telemetry) ──
         Positioned(
           left: 0,
           right: 0,
