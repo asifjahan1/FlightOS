@@ -3,7 +3,7 @@
 **SkyNav** is a professional, offline-first Electronic Flight Bag (EFB) and Aviation Navigation Platform designed specifically for desktop environments (Linux/Windows/macOS). Inspired by industry standards like Garmin Pilot and ForeFlight, SkyNav provides pilots and aviation enthusiasts with a highly immersive, real-time navigation experience.
 
 <div align="center">
-  <img src="assets/screenshot.png" alt="SkyNav Interface" width="100%" />
+  <img src="https://github.com/user-attachments/assets/64588ab5-120c-4c38-8724-e03a7421154c" alt="SkyNav Interface" width="100%" />
 </div>
 
 ---
