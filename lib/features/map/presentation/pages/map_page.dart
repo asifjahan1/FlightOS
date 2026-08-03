@@ -4,6 +4,8 @@
 /// This is the home screen of SkyNav.
 library;
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -101,11 +103,18 @@ class _MapPageState extends State<MapPage> {
       child: Scaffold(
         body: Column(
           children: [
-            const WindowCaption(
-              brightness: Brightness.dark,
-              title: Text('SkyNav', style: TextStyle(color: Colors.white70)),
-              backgroundColor: Color(0xFF0D1117),
-            ),
+            // Custom title bar — WindowCaption crashes on Linux with
+            // TitleBarStyle.normal, so use a simple container there.
+            if (Platform.isLinux)
+              Container(
+                height: 0, // Linux uses native title bar
+              )
+            else
+              const WindowCaption(
+                brightness: Brightness.dark,
+                title: Text('SkyNav', style: TextStyle(color: Colors.white70)),
+                backgroundColor: Color(0xFF0D1117),
+              ),
             Expanded(
               child: MultiBlocListener(
                 listeners: [

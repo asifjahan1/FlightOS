@@ -4,6 +4,8 @@
 /// and launches the Flutter application.
 library;
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:skynav/app.dart';
 import 'package:skynav/features/airport/data/seed/airport_seeder.dart';
@@ -16,18 +18,19 @@ Future<void> main() async {
   // Initialize window manager for kiosk-like behavior
   await windowManager.ensureInitialized();
 
-  const windowOptions = WindowOptions(
+  final windowOptions = WindowOptions(
     title: 'SkyNav',
-    size: Size(1920, 1080),
-    minimumSize: Size(1024, 768),
+    size: const Size(1920, 1080),
+    minimumSize: const Size(1024, 768),
     center: true,
-    backgroundColor: Color(0xFF0D1117),
-    titleBarStyle: TitleBarStyle.hidden,
+    backgroundColor: const Color(0xFF0D1117),
+    // Hidden title bar crashes on Linux — use normal there.
+    titleBarStyle: Platform.isLinux
+        ? TitleBarStyle.normal
+        : TitleBarStyle.hidden,
   );
 
   await windowManager.waitUntilReadyToShow(windowOptions, () async {
-    await windowManager.setFullScreen(false);
-    await windowManager.maximize();
     await windowManager.setPreventClose(false);
     await windowManager.show();
     await windowManager.focus();
@@ -39,9 +42,14 @@ Future<void> main() async {
   // Launch the UI IMMEDIATELY — never block the main isolate before runApp().
   runApp(const SkyNavApp());
 
-  // Seed the database AFTER the first frame is painted so the window
-  // stays responsive and the OS never flags "not responding".
+  // After the first frame is painted, do the heavy lifting:
+  // maximize the window and seed the database.
   WidgetsBinding.instance.addPostFrameCallback((_) async {
+    try {
+      await windowManager.maximize();
+    } catch (e) {
+      debugPrint('WARNING: Could not maximize window: $e');
+    }
     try {
       await sl<AirportSeeder>().seedDatabaseIfEmpty();
     } catch (e, stack) {
