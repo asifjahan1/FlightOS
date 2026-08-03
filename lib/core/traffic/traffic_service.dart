@@ -18,10 +18,10 @@ class SimulatorTrafficService implements TrafficService {
   SimulatorTrafficService(this._locationService);
 
   final LocationService _locationService;
-  
+
   Timer? _simulatorTimer;
   StreamSubscription<TelemetryData>? _locationSub;
-  
+
   TelemetryData? _latestLocation;
   List<TrafficTarget> _ghosts = [];
   final _random = math.Random();
@@ -59,13 +59,15 @@ class SimulatorTrafficService implements TrafficService {
       // Spawn aircraft within roughly ~10 nautical miles (0.15 degrees)
       final latOffset = (_random.nextDouble() - 0.5) * 0.3;
       final lonOffset = (_random.nextDouble() - 0.5) * 0.3;
-      
+
       return TrafficTarget(
         icaoHex: 'A${index.toRadixString(16).padLeft(5, '0').toUpperCase()}',
         callsign: 'GHOST$index',
         latitude: center.latitude + latOffset,
         longitude: center.longitude + lonOffset,
-        altitudeFeet: center.altitudeMslFeet + ((_random.nextDouble() - 0.5) * 4000), // +/- 2000ft
+        altitudeFeet:
+            center.altitudeMslFeet +
+            ((_random.nextDouble() - 0.5) * 4000), // +/- 2000ft
         groundSpeedKnots: 80.0 + _random.nextDouble() * 150.0,
         trackDegrees: _random.nextDouble() * 360.0,
       );
@@ -77,13 +79,19 @@ class SimulatorTrafficService implements TrafficService {
     final updated = <TrafficTarget>[];
     for (final ghost in _ghosts) {
       final distMeters = (ghost.groundSpeedKnots / 1.94384) * 1.0; // 1 sec
-      final latOffset = (distMeters * math.cos(ghost.trackDegrees * math.pi / 180)) / 111320.0;
-      final lonOffset = (distMeters * math.sin(ghost.trackDegrees * math.pi / 180)) / (111320.0 * math.cos(ghost.latitude * math.pi / 180));
-      
-      updated.add(ghost.copyWith(
-        latitude: ghost.latitude + latOffset,
-        longitude: ghost.longitude + lonOffset,
-      ));
+      final latOffset =
+          (distMeters * math.cos(ghost.trackDegrees * math.pi / 180)) /
+          111320.0;
+      final lonOffset =
+          (distMeters * math.sin(ghost.trackDegrees * math.pi / 180)) /
+          (111320.0 * math.cos(ghost.latitude * math.pi / 180));
+
+      updated.add(
+        ghost.copyWith(
+          latitude: ghost.latitude + latOffset,
+          longitude: ghost.longitude + lonOffset,
+        ),
+      );
     }
     _ghosts = updated;
   }
@@ -111,17 +119,17 @@ class OpenSkyTrafficService implements TrafficService {
     // OpenSky data refreshes roughly every 10 seconds.
     _pollingTimer = Timer.periodic(const Duration(seconds: 10), (timer) async {
       if (_latestLocation == null) return;
-      
+
       await _fetchTraffic();
       controller.add(List.unmodifiable(_targets));
     });
 
     // Initial fetch
     Future.delayed(const Duration(seconds: 2), () async {
-       if (_latestLocation != null) {
-          await _fetchTraffic();
-          controller.add(List.unmodifiable(_targets));
-       }
+      if (_latestLocation != null) {
+        await _fetchTraffic();
+        controller.add(List.unmodifiable(_targets));
+      }
     });
 
     controller.onCancel = () {
@@ -138,14 +146,15 @@ class OpenSkyTrafficService implements TrafficService {
 
     // Bounding box of roughly ~35 miles around the aircraft.
     // 1 degree latitude ~ 69 miles. So +/- 0.5 degrees.
-    final center = _latestLocation!;
+    final center = _latestLocation;
     final lamin = center.latitude - 0.5;
     final lamax = center.latitude + 0.5;
     final lomin = center.longitude - 0.5;
     final lomax = center.longitude + 0.5;
 
     final url = Uri.parse(
-        'https://opensky-network.org/api/states/all?lamin=$lamin&lomin=$lomin&lamax=$lamax&lomax=$lomax');
+      'https://opensky-network.org/api/states/all?lamin=$lamin&lomin=$lomin&lamax=$lamax&lomax=$lomax',
+    );
 
     try {
       final response = await http.get(url).timeout(const Duration(seconds: 5));
@@ -153,7 +162,7 @@ class OpenSkyTrafficService implements TrafficService {
         final data = jsonDecode(response.body);
         // ignore: avoid_dynamic_calls
         final states = data['states'] as List<dynamic>?;
-        
+
         if (states == null) {
           _targets = [];
           return;
@@ -162,39 +171,42 @@ class OpenSkyTrafficService implements TrafficService {
         final parsedTargets = <TrafficTarget>[];
 
         for (final state in states) {
-           // OpenSky state array format:
-           // 0: icao24 (string)
-           // 1: callsign (string)
-           // 2: origin_country (string)
-           // 3: time_position (int)
-           // 4: last_contact (int)
-           // 5: longitude (float)
-           // 6: latitude (float)
-           // 7: baro_altitude (float)
-           // 8: on_ground (boolean)
-           // 9: velocity (float) m/s
-           // 10: true_track (float)
-           // ...
+          // OpenSky state array format:
+          // 0: icao24 (string)
+          // 1: callsign (string)
+          // 2: origin_country (string)
+          // 3: time_position (int)
+          // 4: last_contact (int)
+          // 5: longitude (float)
+          // 6: latitude (float)
+          // 7: baro_altitude (float)
+          // 8: on_ground (boolean)
+          // 9: velocity (float) m/s
+          // 10: true_track (float)
+          // ...
 
-           // ignore: avoid_dynamic_calls
-           final icao = state[0]?.toString() ?? 'UNKNOWN';
-           // ignore: avoid_dynamic_calls
-           final callsignRaw = state[1]?.toString().trim();
-           final callsign = (callsignRaw != null && callsignRaw.isNotEmpty) ? callsignRaw : null;
-           
-           // ignore: avoid_dynamic_calls
-           final lon = (state[5] as num?)?.toDouble();
-           // ignore: avoid_dynamic_calls
-           final lat = (state[6] as num?)?.toDouble();
-           // ignore: avoid_dynamic_calls
-           final altMeters = (state[7] as num?)?.toDouble();
-           // ignore: avoid_dynamic_calls
-           final velocityMps = (state[9] as num?)?.toDouble() ?? 0.0;
-           // ignore: avoid_dynamic_calls
-           final track = (state[10] as num?)?.toDouble() ?? 0.0;
+          // ignore: avoid_dynamic_calls
+          final icao = state[0]?.toString() ?? 'UNKNOWN';
+          // ignore: avoid_dynamic_calls
+          final callsignRaw = state[1]?.toString().trim();
+          final callsign = (callsignRaw != null && callsignRaw.isNotEmpty)
+              ? callsignRaw
+              : null;
 
-           if (lat != null && lon != null && altMeters != null) {
-              parsedTargets.add(TrafficTarget(
+          // ignore: avoid_dynamic_calls
+          final lon = (state[5] as num?)?.toDouble();
+          // ignore: avoid_dynamic_calls
+          final lat = (state[6] as num?)?.toDouble();
+          // ignore: avoid_dynamic_calls
+          final altMeters = (state[7] as num?)?.toDouble();
+          // ignore: avoid_dynamic_calls
+          final velocityMps = (state[9] as num?)?.toDouble() ?? 0.0;
+          // ignore: avoid_dynamic_calls
+          final track = (state[10] as num?)?.toDouble() ?? 0.0;
+
+          if (lat != null && lon != null && altMeters != null) {
+            parsedTargets.add(
+              TrafficTarget(
                 icaoHex: icao,
                 callsign: callsign,
                 latitude: lat,
@@ -202,10 +214,11 @@ class OpenSkyTrafficService implements TrafficService {
                 altitudeFeet: altMeters * 3.28084,
                 groundSpeedKnots: velocityMps * 1.94384,
                 trackDegrees: track,
-              ));
-           }
+              ),
+            );
+          }
         }
-        
+
         _targets = parsedTargets;
       }
     } catch (e) {

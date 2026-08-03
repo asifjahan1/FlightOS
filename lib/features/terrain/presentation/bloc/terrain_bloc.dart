@@ -6,20 +6,25 @@ import 'package:skynav/features/terrain/presentation/bloc/terrain_state.dart';
 
 @injectable
 class TerrainBloc extends Bloc<TerrainEvent, TerrainState> {
-  final TerrainService _service;
-  
-  double? _lastAltitude;
-  DateTime? _lastUpdate;
-
   TerrainBloc(this._service) : super(TerrainInitial()) {
     on<TerrainLocationUpdated>(_onLocationUpdated);
   }
+  final TerrainService _service;
 
-  void _onLocationUpdated(TerrainLocationUpdated event, Emitter<TerrainState> emit) {
-    final terrainElevation = _service.getElevationAt(event.latitude, event.longitude);
+  double? _lastAltitude;
+  DateTime? _lastUpdate;
+
+  void _onLocationUpdated(
+    TerrainLocationUpdated event,
+    Emitter<TerrainState> emit,
+  ) {
+    final terrainElevation = _service.getElevationAt(
+      event.latitude,
+      event.longitude,
+    );
     final agl = event.altitudeMsl - terrainElevation;
-    
-    bool isDescending = false;
+
+    var isDescending = false;
     final now = DateTime.now();
     if (_lastAltitude != null && _lastUpdate != null) {
       final dt = now.difference(_lastUpdate!).inSeconds;
@@ -30,16 +35,18 @@ class TerrainBloc extends Bloc<TerrainEvent, TerrainState> {
         }
       }
     }
-    
+
     _lastAltitude = event.altitudeMsl;
     _lastUpdate = now;
 
     final alert = (agl < 500 && isDescending) || (agl < 200);
 
-    emit(TerrainUpdated(
-      currentElevation: terrainElevation,
-      agl: agl,
-      isTawsAlertActive: alert,
-    ));
+    emit(
+      TerrainUpdated(
+        currentElevation: terrainElevation,
+        agl: agl,
+        isTawsAlertActive: alert,
+      ),
+    );
   }
 }

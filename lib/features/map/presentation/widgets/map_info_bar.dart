@@ -2,14 +2,13 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:latlong2/latlong.dart';
-
 import 'package:skynav/core/geo/coordinate_utils.dart';
 import 'package:skynav/core/theme/app_theme.dart';
 import 'package:skynav/core/utils/nav_math.dart';
-import 'package:skynav/features/flight_plan/domain/entities/flight_plan.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skynav/features/checklist/presentation/bloc/checklist_bloc.dart';
+import 'package:skynav/features/flight_plan/domain/entities/flight_plan.dart';
 import 'package:skynav/features/scratchpad/presentation/bloc/scratchpad_bloc.dart';
 
 /// Bottom status bar displaying map information.

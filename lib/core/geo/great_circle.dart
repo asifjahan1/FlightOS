@@ -48,7 +48,8 @@ abstract final class GreatCircle {
     final dLat = lat2 - lat1;
     final dLon = to.longitudeInRad - from.longitudeInRad;
 
-    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+    final a =
+        math.sin(dLat / 2) * math.sin(dLat / 2) +
         math.cos(lat1) *
             math.cos(lat2) *
             math.sin(dLon / 2) *
@@ -89,7 +90,8 @@ abstract final class GreatCircle {
     final dLon = (to.longitude - from.longitude) * _deg2Rad;
 
     final y = math.sin(dLon) * math.cos(lat2);
-    final x = math.cos(lat1) * math.sin(lat2) -
+    final x =
+        math.cos(lat1) * math.sin(lat2) -
         math.sin(lat1) * math.cos(lat2) * math.cos(dLon);
 
     return (_normalizeAngle(math.atan2(y, x) * _rad2Deg) + 360) % 360;
@@ -123,7 +125,8 @@ abstract final class GreatCircle {
           math.cos(lat1) * math.sin(distRad) * math.cos(bearingRad),
     );
 
-    final lon2 = lon1 +
+    final lon2 =
+        lon1 +
         math.atan2(
           math.sin(bearingRad) * math.sin(distRad) * math.cos(lat1),
           math.cos(distRad) - math.sin(lat1) * math.sin(lat2),
@@ -239,8 +242,7 @@ abstract final class GreatCircle {
         (radiusNm * AviationUnits.nmToMeters) /
         Earth.meanRadiusMeters *
         _rad2Deg;
-    final lonDelta =
-        latDelta / math.cos(center.latitudeInRad);
+    final lonDelta = latDelta / math.cos(center.latitudeInRad);
 
     return (
       LatLng(center.latitude - latDelta, center.longitude - lonDelta),
@@ -309,13 +311,15 @@ abstract final class GreatCircle {
 
       sinAlpha = cosU1 * cosU2 * sinLambda / sinSigma;
       cos2Alpha = 1 - sinAlpha * sinAlpha;
-      cos2SigmaM =
-          cos2Alpha == 0 ? 0 : cosSigma - 2 * sinU1 * sinU2 / cos2Alpha;
+      cos2SigmaM = cos2Alpha == 0
+          ? 0
+          : cosSigma - 2 * sinU1 * sinU2 / cos2Alpha;
 
       final c = f / 16 * cos2Alpha * (4 + f * (4 - 3 * cos2Alpha));
 
       prevLambda = lambda;
-      lambda = l +
+      lambda =
+          l +
           (1 - c) *
               f *
               sinAlpha *
@@ -341,10 +345,10 @@ abstract final class GreatCircle {
     final uSq = cos2Alpha * (a * a - b * b) / (b * b);
     final bigA =
         1 + uSq / 16384 * (4096 + uSq * (-768 + uSq * (320 - 175 * uSq)));
-    final bigB =
-        uSq / 1024 * (256 + uSq * (-128 + uSq * (74 - 47 * uSq)));
+    final bigB = uSq / 1024 * (256 + uSq * (-128 + uSq * (74 - 47 * uSq)));
 
-    final deltaSigma = bigB *
+    final deltaSigma =
+        bigB *
         sinSigma *
         (cos2SigmaM +
             bigB /

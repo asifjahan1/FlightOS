@@ -10,10 +10,10 @@ sealed class ScratchpadState extends Equatable {
 }
 
 class ScratchpadLoaded extends ScratchpadState {
-  final String text;
-  final bool isVisible;
 
   const ScratchpadLoaded({this.text = '', this.isVisible = false});
+  final String text;
+  final bool isVisible;
 
   ScratchpadLoaded copyWith({String? text, bool? isVisible}) {
     return ScratchpadLoaded(
@@ -35,8 +35,8 @@ sealed class ScratchpadEvent extends Equatable {
 
 class ToggleScratchpad extends ScratchpadEvent {}
 class UpdateScratchpadText extends ScratchpadEvent {
-  final String text;
   const UpdateScratchpadText(this.text);
+  final String text;
   @override
   List<Object?> get props => [text];
 }

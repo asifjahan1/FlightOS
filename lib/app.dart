@@ -6,19 +6,18 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import 'package:skynav/core/theme/app_theme.dart';
+import 'package:skynav/features/airspace/presentation/bloc/airspace_bloc.dart';
+import 'package:skynav/features/airspace/presentation/bloc/airspace_event.dart';
+import 'package:skynav/features/checklist/presentation/bloc/checklist_bloc.dart';
 import 'package:skynav/features/flight_plan/presentation/bloc/flight_plan_bloc.dart';
 import 'package:skynav/features/map/presentation/bloc/map_bloc.dart';
 import 'package:skynav/features/map/presentation/pages/map_page.dart';
+import 'package:skynav/features/scratchpad/presentation/bloc/scratchpad_bloc.dart';
 import 'package:skynav/features/telemetry/presentation/bloc/telemetry_bloc.dart';
+import 'package:skynav/features/terrain/presentation/bloc/terrain_bloc.dart';
 import 'package:skynav/features/traffic/presentation/bloc/traffic_bloc.dart';
 import 'package:skynav/features/weather/presentation/bloc/weather_bloc.dart';
-import 'package:skynav/features/airspace/presentation/bloc/airspace_bloc.dart';
-import 'package:skynav/features/airspace/presentation/bloc/airspace_event.dart';
-import 'package:skynav/features/terrain/presentation/bloc/terrain_bloc.dart';
-import 'package:skynav/features/checklist/presentation/bloc/checklist_bloc.dart';
-import 'package:skynav/features/scratchpad/presentation/bloc/scratchpad_bloc.dart';
 import 'package:skynav/injection.dart';
 
 /// Root application widget.

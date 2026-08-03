@@ -7,14 +7,16 @@ import 'package:skynav/features/airspace/presentation/bloc/airspace_state.dart';
 
 @injectable
 class AirspaceBloc extends Bloc<AirspaceEvent, AirspaceState> {
-  final AirspaceService _service;
-
   AirspaceBloc(this._service) : super(AirspaceInitial()) {
     on<AirspacesLoaded>(_onAirspacesLoaded);
     on<AirspaceLocationUpdated>(_onLocationUpdated);
   }
+  final AirspaceService _service;
 
-  Future<void> _onAirspacesLoaded(AirspacesLoaded event, Emitter<AirspaceState> emit) async {
+  Future<void> _onAirspacesLoaded(
+    AirspacesLoaded event,
+    Emitter<AirspaceState> emit,
+  ) async {
     emit(AirspaceLoading());
     try {
       final airspaces = await _service.getAirspaces();
@@ -24,15 +26,19 @@ class AirspaceBloc extends Bloc<AirspaceEvent, AirspaceState> {
     }
   }
 
-  void _onLocationUpdated(AirspaceLocationUpdated event, Emitter<AirspaceState> emit) {
+  void _onLocationUpdated(
+    AirspaceLocationUpdated event,
+    Emitter<AirspaceState> emit,
+  ) {
     if (state is! AirspaceLoaded) return;
     final currentState = state as AirspaceLoaded;
 
     Airspace? activeAlert;
-    
+
     // Check if the current location is inside any airspace polygon and within its vertical bounds
     for (final airspace in currentState.airspaces) {
-      if (event.altitude >= airspace.floorAltitude && event.altitude <= airspace.ceilingAltitude) {
+      if (event.altitude >= airspace.floorAltitude &&
+          event.altitude <= airspace.ceilingAltitude) {
         if (airspace.contains(event.latitude, event.longitude)) {
           activeAlert = airspace;
           break; // Stop at the first airspace we are inside for simplicity

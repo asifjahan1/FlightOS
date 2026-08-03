@@ -9,11 +9,6 @@ enum FlightCategory {
 }
 
 class WeatherReport extends Equatable {
-  final String airportId;
-  final String rawMetar;
-  final String rawTaf;
-  final FlightCategory category;
-  final DateTime timestamp;
 
   const WeatherReport({
     required this.airportId,
@@ -22,6 +17,11 @@ class WeatherReport extends Equatable {
     required this.category,
     required this.timestamp,
   });
+  final String airportId;
+  final String rawMetar;
+  final String rawTaf;
+  final FlightCategory category;
+  final DateTime timestamp;
 
   @override
   List<Object?> get props => [airportId, rawMetar, rawTaf, category, timestamp];

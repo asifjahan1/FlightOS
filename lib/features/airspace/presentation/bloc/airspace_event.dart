@@ -10,15 +10,16 @@ sealed class AirspaceEvent extends Equatable {
 class AirspacesLoaded extends AirspaceEvent {}
 
 class AirspaceLocationUpdated extends AirspaceEvent {
-  final double latitude;
-  final double longitude;
-  final double altitude; // feet MSL
+  // feet MSL
 
   const AirspaceLocationUpdated({
     required this.latitude,
     required this.longitude,
     required this.altitude,
   });
+  final double latitude;
+  final double longitude;
+  final double altitude;
 
   @override
   List<Object?> get props => [latitude, longitude, altitude];

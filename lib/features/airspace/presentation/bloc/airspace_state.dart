@@ -13,13 +13,11 @@ class AirspaceInitial extends AirspaceState {}
 class AirspaceLoading extends AirspaceState {}
 
 class AirspaceLoaded extends AirspaceState {
-  final List<Airspace> airspaces;
-  final Airspace? currentAlert; // The airspace the aircraft is currently inside
+  // The airspace the aircraft is currently inside
 
-  const AirspaceLoaded({
-    required this.airspaces,
-    this.currentAlert,
-  });
+  const AirspaceLoaded({required this.airspaces, this.currentAlert});
+  final List<Airspace> airspaces;
+  final Airspace? currentAlert;
 
   AirspaceLoaded copyWith({
     List<Airspace>? airspaces,
@@ -37,8 +35,8 @@ class AirspaceLoaded extends AirspaceState {
 }
 
 class AirspaceError extends AirspaceState {
-  final String message;
   const AirspaceError(this.message);
+  final String message;
 
   @override
   List<Object?> get props => [message];
