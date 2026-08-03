@@ -72,7 +72,7 @@ class ChecklistBloc extends Bloc<ChecklistEvent, ChecklistState> {
 
   void _loadInitial() {
     final initialChecklists = [
-      Checklist(
+      const Checklist(
         id: 'c1',
         title: 'Pre-Flight',
         items: [
@@ -81,7 +81,7 @@ class ChecklistBloc extends Bloc<ChecklistEvent, ChecklistState> {
           ChecklistItem(id: 'i3', title: 'Flaps', action: 'DOWN'),
         ],
       ),
-      Checklist(
+      const Checklist(
         id: 'c2',
         title: 'Before Takeoff',
         items: [
@@ -120,8 +120,9 @@ class ChecklistBloc extends Bloc<ChecklistEvent, ChecklistState> {
       final newLists = s.checklists.map((c) {
         if (c.id == event.checklistId) {
           final newItems = c.items.map((i) {
-            if (i.id == event.itemId)
+            if (i.id == event.itemId) {
               return i.copyWith(isCompleted: !i.isCompleted);
+            }
             return i;
           }).toList();
           return c.copyWith(items: newItems);
