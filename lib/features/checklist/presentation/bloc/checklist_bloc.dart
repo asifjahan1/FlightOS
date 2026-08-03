@@ -11,15 +11,14 @@ sealed class ChecklistState extends Equatable {
 }
 
 class ChecklistLoaded extends ChecklistState {
-  final List<Checklist> checklists;
-  final int activeIndex;
-  final bool isPanelVisible;
-
   const ChecklistLoaded({
     required this.checklists,
     this.activeIndex = 0,
     this.isPanelVisible = false,
   });
+  final List<Checklist> checklists;
+  final int activeIndex;
+  final bool isPanelVisible;
 
   ChecklistLoaded copyWith({
     List<Checklist>? checklists,
@@ -43,17 +42,20 @@ sealed class ChecklistEvent extends Equatable {
   @override
   List<Object?> get props => [];
 }
+
 class ToggleChecklistPanel extends ChecklistEvent {}
+
 class SelectChecklist extends ChecklistEvent {
-  final int index;
   const SelectChecklist(this.index);
+  final int index;
   @override
   List<Object?> get props => [index];
 }
+
 class ToggleChecklistItem extends ChecklistEvent {
+  const ToggleChecklistItem(this.checklistId, this.itemId);
   final String checklistId;
   final String itemId;
-  const ToggleChecklistItem(this.checklistId, this.itemId);
   @override
   List<Object?> get props => [checklistId, itemId];
 }
@@ -69,22 +71,38 @@ class ChecklistBloc extends Bloc<ChecklistEvent, ChecklistState> {
   }
 
   void _loadInitial() {
-    final initialChecklists = [
-      Checklist(id: 'c1', title: 'Pre-Flight', items: [
-        ChecklistItem(id: 'i1', title: 'Master Switch', action: 'ON'),
-        ChecklistItem(id: 'i2', title: 'Fuel Quantity', action: 'CHECK'),
-        ChecklistItem(id: 'i3', title: 'Flaps', action: 'DOWN'),
-      ]),
-      Checklist(id: 'c2', title: 'Before Takeoff', items: [
-        ChecklistItem(id: 'i4', title: 'Flight Controls', action: 'FREE & CORRECT'),
-        ChecklistItem(id: 'i5', title: 'Instruments', action: 'SET'),
-        ChecklistItem(id: 'i6', title: 'Trim', action: 'SET FOR TAKEOFF'),
-      ]),
+    const initialChecklists = [
+      Checklist(
+        id: 'c1',
+        title: 'Pre-Flight',
+        items: [
+          ChecklistItem(id: 'i1', title: 'Master Switch', action: 'ON'),
+          ChecklistItem(id: 'i2', title: 'Fuel Quantity', action: 'CHECK'),
+          ChecklistItem(id: 'i3', title: 'Flaps', action: 'DOWN'),
+        ],
+      ),
+      Checklist(
+        id: 'c2',
+        title: 'Before Takeoff',
+        items: [
+          ChecklistItem(
+            id: 'i4',
+            title: 'Flight Controls',
+            action: 'FREE & CORRECT',
+          ),
+          ChecklistItem(id: 'i5', title: 'Instruments', action: 'SET'),
+          ChecklistItem(id: 'i6', title: 'Trim', action: 'SET FOR TAKEOFF'),
+        ],
+      ),
     ];
-    emit(ChecklistLoaded(checklists: initialChecklists));
+    // ignore: invalid_use_of_visible_for_testing_member
+    emit(const ChecklistLoaded(checklists: initialChecklists));
   }
 
-  void _onTogglePanel(ToggleChecklistPanel event, Emitter<ChecklistState> emit) {
+  void _onTogglePanel(
+    ToggleChecklistPanel event,
+    Emitter<ChecklistState> emit,
+  ) {
     if (state is ChecklistLoaded) {
       final s = state as ChecklistLoaded;
       emit(s.copyWith(isPanelVisible: !s.isPanelVisible));
@@ -103,7 +121,9 @@ class ChecklistBloc extends Bloc<ChecklistEvent, ChecklistState> {
       final newLists = s.checklists.map((c) {
         if (c.id == event.checklistId) {
           final newItems = c.items.map((i) {
-            if (i.id == event.itemId) return i.copyWith(isCompleted: !i.isCompleted);
+            if (i.id == event.itemId) {
+              return i.copyWith(isCompleted: !i.isCompleted);
+            }
             return i;
           }).toList();
           return c.copyWith(items: newItems);
