@@ -28,8 +28,10 @@ DynamicLibrary openSqliteOnLinux() {
       return DynamicLibrary.open(name);
     } catch (_) {}
   }
-  
-  throw ArgumentError('Failed to load SQLite3 dynamic library. Please install it using `sudo apt-get install libsqlite3-0` or `sudo apt-get install sqlite3`');
+
+  throw ArgumentError(
+    'Failed to load SQLite3 dynamic library. Please install it using `sudo apt-get install libsqlite3-0` or `sudo apt-get install sqlite3`',
+  );
 }
 
 void setupSqliteDatabase() {
