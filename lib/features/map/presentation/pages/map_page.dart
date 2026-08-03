@@ -1,16 +1,18 @@
 /// Main map page — the primary view of the application.
 ///
-/// Displays the flutter_map widget with layer controls and an info bar.
+/// Displays the FlutterMap widget with layer controls and an info bar.
 /// This is the home screen of SkyNav.
 library;
 
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:maplibre/maplibre.dart';
 import 'package:skynav/core/constants/map_constants.dart';
 import 'package:skynav/core/theme/app_theme.dart';
 import 'package:skynav/features/airspace/presentation/bloc/airspace_bloc.dart';
@@ -42,11 +44,11 @@ class MapPage extends StatefulWidget {
 }
 
 class _MapPageState extends State<MapPage> {
-  MapController? _mapController;
+  final MapController _flutterMapController = MapController();
 
   @override
   void dispose() {
-    // MapController doesn't have a dispose method directly exposed, or handled natively.
+    _flutterMapController.dispose();
     super.dispose();
   }
 
@@ -66,7 +68,10 @@ class _MapPageState extends State<MapPage> {
                 MapConstants.minZoom,
                 MapConstants.maxZoom,
               );
-              _mapController?.animateCamera(zoom: newZoom);
+              _flutterMapController.move(
+                _flutterMapController.camera.center,
+                newZoom,
+              );
               context.read<MapBloc>().add(MapZoomChanged(zoom: newZoom));
             }
             return KeyEventResult.handled;
@@ -78,7 +83,10 @@ class _MapPageState extends State<MapPage> {
                 MapConstants.minZoom,
                 MapConstants.maxZoom,
               );
-              _mapController?.animateCamera(zoom: newZoom);
+              _flutterMapController.move(
+                _flutterMapController.camera.center,
+                newZoom,
+              );
               context.read<MapBloc>().add(MapZoomChanged(zoom: newZoom));
             }
             return KeyEventResult.handled;
@@ -103,12 +111,9 @@ class _MapPageState extends State<MapPage> {
       child: Scaffold(
         body: Column(
           children: [
-            // Custom title bar — WindowCaption crashes on Linux with
-            // TitleBarStyle.normal, so use a simple container there.
+            // Custom title bar — on Linux use native title bar.
             if (Platform.isLinux)
-              Container(
-                height: 0, // Linux uses native title bar
-              )
+              const SizedBox.shrink()
             else
               const WindowCaption(
                 brightness: Brightness.dark,
@@ -126,89 +131,29 @@ class _MapPageState extends State<MapPage> {
                       return current is MapReady;
                     },
                     listener: (context, state) {
-                      if (state is MapReady && _mapController != null) {
-                        final style = _mapController!.style;
-                        if (style != null) {
-                          // VFR Chart
-                          try {
-                            if (state.visibleLayers.contains(
-                              MapLayerType.vfrChart,
-                            )) {
-                              style.addSource(
-                                const RasterSource(
-                                  id: 'vfr',
-                                  tiles: [
-                                    'https://wms.chartbundle.com/tms/1.0.0/sec/{z}/{x}/{y}.png',
-                                  ],
-                                  tileSize: 256,
-                                  scheme: TileScheme.tms,
-                                ),
-                              );
-                              style.addLayer(
-                                const RasterStyleLayer(
-                                  id: 'vfr-layer',
-                                  sourceId: 'vfr',
-                                ),
-                              );
-                            } else {
-                              style.removeLayer('vfr-layer');
-                              style.removeSource('vfr');
-                            }
-                          } catch (_) {}
-
-                          // IFR Chart
-                          try {
-                            if (state.visibleLayers.contains(
-                              MapLayerType.ifrChart,
-                            )) {
-                              style.addSource(
-                                const RasterSource(
-                                  id: 'ifr',
-                                  tiles: [
-                                    'https://wms.chartbundle.com/tms/1.0.0/enrl/{z}/{x}/{y}.png',
-                                  ],
-                                  tileSize: 256,
-                                  scheme: TileScheme.tms,
-                                ),
-                              );
-                              style.addLayer(
-                                const RasterStyleLayer(
-                                  id: 'ifr-layer',
-                                  sourceId: 'ifr',
-                                ),
-                              );
-                            } else {
-                              style.removeLayer('ifr-layer');
-                              style.removeSource('ifr');
-                            }
-                          } catch (_) {}
-                        }
-                      }
-                    },
-                  ),
-                  BlocListener<MapBloc, MapState>(
-                    listenWhen: (previous, current) {
-                      if (previous is MapReady && current is MapReady) {
-                        return previous.airports != current.airports;
-                      }
-                      return current is MapReady;
-                    },
-                    listener: (context, state) {
-                      if (state is MapReady) {
-                        if (state.airports.isNotEmpty) {
-                          context.read<WeatherBloc>().add(
-                            FetchWeatherForAirports(
-                              state.airports.map((a) => a.icao).toList(),
-                            ),
-                          );
-                        }
-                      }
+                      // Layer visibility changes are handled reactively
+                      // in the BlocBuilder below.
                     },
                   ),
                   BlocListener<TelemetryBloc, TelemetryState>(
                     listener: (context, state) {
+                      if (state is TelemetryActive && state.followModeEnabled) {
+                        final mapState = context.read<MapBloc>().state;
+                        if (mapState is MapReady) {
+                          _flutterMapController.move(
+                            LatLng(
+                              state.data.latitude,
+                              state.data.longitude,
+                            ),
+                            mapState.zoom,
+                          );
+                        }
+                      }
+                      // Trigger weather/airspace/terrain updates
                       if (state is TelemetryActive) {
-                        // Check airspace proximity
+                        context.read<WeatherBloc>().add(
+                          const FetchWeatherForAirports(['VGHS']),
+                        );
                         context.read<AirspaceBloc>().add(
                           AirspaceLocationUpdated(
                             latitude: state.data.latitude,
@@ -216,7 +161,6 @@ class _MapPageState extends State<MapPage> {
                             altitude: state.data.altitudeMslFeet,
                           ),
                         );
-                        // Check terrain proximity
                         context.read<TerrainBloc>().add(
                           TerrainLocationUpdated(
                             latitude: state.data.latitude,
@@ -224,16 +168,6 @@ class _MapPageState extends State<MapPage> {
                             altitudeMsl: state.data.altitudeMslFeet,
                           ),
                         );
-
-                        if (state.followModeEnabled && _mapController != null) {
-                          _mapController?.animateCamera(
-                            center: Geographic(
-                              lat: state.data.latitude,
-                              lon: state.data.longitude,
-                            ),
-                            zoom: 12,
-                          );
-                        }
                       }
                     },
                   ),
@@ -244,9 +178,7 @@ class _MapPageState extends State<MapPage> {
                       MapInitial() || MapLoading() => const _MapLoadingView(),
                       MapReady() => _MapReadyView(
                         state: state,
-                        onMapCreated: (controller) =>
-                            _mapController = controller,
-                        mapController: _mapController,
+                        mapController: _flutterMapController,
                       ),
                       MapError(:final message) => _MapErrorView(
                         message: message,
@@ -324,19 +256,17 @@ class _MapErrorView extends StatelessWidget {
 class _MapReadyView extends StatelessWidget {
   const _MapReadyView({
     required this.state,
-    required this.onMapCreated,
-    this.mapController,
+    required this.mapController,
   });
 
   final MapReady state;
-  final void Function(MapController) onMapCreated;
-  final MapController? mapController;
+  final MapController mapController;
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // ── Main Map ──
+        // ── Main FlutterMap ──
         BlocBuilder<AirspaceBloc, AirspaceState>(
           builder: (context, airspaceState) {
             return BlocBuilder<FlightPlanBloc, FlightPlanState>(
@@ -345,125 +275,121 @@ class _MapReadyView extends StatelessWidget {
                     ? flightPlanState.flightPlan
                     : null;
 
-                final layers = <Layer>[];
-
-                if (airspaceState is AirspaceLoaded) {
-                  for (final airspace in airspaceState.airspaces) {
-                    final color = airspace.type == 'Class B'
-                        ? Colors.blue
-                        : Colors.red;
-                    layers.add(
-                      PolygonLayer(
-                        polygons: [
-                          Feature<Polygon>(
-                            geometry: Polygon([
-                              PositionSeries.from(
-                                airspace.boundary
-                                    .map(
-                                      (List<double> c) =>
-                                          Position.create(x: c[1], y: c[0]),
-                                    )
-                                    .toList(),
-                              ),
-                            ]),
-                          ),
-                        ],
-                        color: color.withValues(alpha: 0.15),
-                        outlineColor: color,
-                      ),
-                    );
-                  }
-                }
-                if (activePlan != null && activePlan.waypoints.length > 1) {
-                  layers.add(
-                    PolylineLayer(
-                      polylines: [
-                        Feature<LineString>(
-                          geometry: LineString.from(
-                            activePlan.waypoints.map(
-                              (wp) => Position.create(
-                                x: wp.longitude,
-                                y: wp.latitude,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                      color: const Color(0xFFFF00FF), // Aviation Magenta
-                      width: 4,
-                    ),
-                  );
-                }
-
-                return MapLibreMap(
-                  onMapCreated: onMapCreated,
+                return FlutterMap(
+                  mapController: mapController,
                   options: MapOptions(
-                    initCenter: Geographic(
-                      lat: state.center.latitude,
-                      lon: state.center.longitude,
+                    initialCenter: LatLng(
+                      state.center.latitude,
+                      state.center.longitude,
                     ),
-                    initZoom: state.zoom,
+                    initialZoom: state.zoom,
                     minZoom: MapConstants.minZoom,
                     maxZoom: MapConstants.maxZoom,
-                  ),
-                  layers: layers,
-                  onEvent: (event) async {
-                    if (event is MapEventClick) {
-                      final position = event.point;
-                      context.read<FlightPlanBloc>().add(
-                        WaypointAdded(
-                          Waypoint(
-                            latitude: position.lat,
-                            longitude: position.lon,
-                            name: 'Custom',
-                          ),
-                        ),
-                      );
-                    }
-
-                    if (event is MapEventCameraIdle && mapController != null) {
-                      final bounds = mapController!.getVisibleRegion();
-                      final camera = mapController!.camera;
-
-                      if (camera != null) {
+                    backgroundColor: const Color(0xFF0D1117),
+                    onMapEvent: (event) {
+                      if (event is MapEventMoveEnd) {
+                        final camera = mapController.camera;
+                        final bounds = camera.visibleBounds;
                         if (context.mounted) {
                           context.read<MapBloc>().add(
                             MapMoved(
-                              center: LatLng(
-                                camera.center.lat,
-                                camera.center.lon,
-                              ),
+                              center: camera.center,
                               zoom: camera.zoom,
                               bounds: MapBounds(
-                                southWest: LatLng(
-                                  bounds.latitudeSouth,
-                                  bounds.longitudeWest,
-                                ),
-                                northEast: LatLng(
-                                  bounds.latitudeNorth,
-                                  bounds.longitudeEast,
-                                ),
+                                southWest: bounds.southWest,
+                                northEast: bounds.northEast,
                               ),
                             ),
                           );
                         }
                       }
-                    }
-                  },
+                    },
+                    onTap: (tapPosition, latLng) {
+                      context.read<FlightPlanBloc>().add(
+                        WaypointAdded(
+                          Waypoint(
+                            latitude: latLng.latitude,
+                            longitude: latLng.longitude,
+                            name: 'Custom',
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                   children: [
+                    // ── Base Tile Layer ──
+                    TileLayer(
+                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'com.skynav.skynav',
+                      tileProvider: CancellableNetworkTileProvider(),
+                      maxZoom: MapConstants.maxZoom,
+                      // Use a dark-themed tile server or apply color filter
+                    ),
+
+                    // ── VFR Chart Overlay ──
+                    if (state.visibleLayers.contains(MapLayerType.vfrChart))
+                      Opacity(
+                        opacity: 0.7,
+                        child: TileLayer(
+                          urlTemplate: 'https://wms.chartbundle.com/tms/1.0.0/sec/{z}/{x}/{y}.png?type=google',
+                          tileProvider: CancellableNetworkTileProvider(),
+                          maxZoom: 12,
+                        ),
+                      ),
+
+                    // ── IFR Chart Overlay ──
+                    if (state.visibleLayers.contains(MapLayerType.ifrChart))
+                      Opacity(
+                        opacity: 0.7,
+                        child: TileLayer(
+                          urlTemplate: 'https://wms.chartbundle.com/tms/1.0.0/enrl/{z}/{x}/{y}.png?type=google',
+                          tileProvider: CancellableNetworkTileProvider(),
+                          maxZoom: 12,
+                        ),
+                      ),
+
+                    // ── Airspace Polygons ──
+                    if (airspaceState is AirspaceLoaded)
+                      PolygonLayer(
+                        polygons: airspaceState.airspaces.map((airspace) {
+                          final color = airspace.type == 'Class B'
+                              ? Colors.blue
+                              : Colors.red;
+                          return Polygon(
+                            points: airspace.boundary
+                                .map((c) => LatLng(c[0], c[1]))
+                                .toList(),
+                            color: color.withValues(alpha: 0.15),
+                            borderColor: color,
+                            borderStrokeWidth: 2,
+                          );
+                        }).toList(),
+                      ),
+
+                    // ── Flight Plan Route ──
+                    if (activePlan != null && activePlan.waypoints.length > 1)
+                      PolylineLayer(
+                        polylines: [
+                          Polyline(
+                            points: activePlan.waypoints
+                                .map((wp) => LatLng(wp.latitude, wp.longitude))
+                                .toList(),
+                            color: const Color(0xFFFF00FF), // Aviation Magenta
+                            strokeWidth: 4,
+                          ),
+                        ],
+                      ),
+
+                    // ── Airport Markers ──
                     if (state.visibleLayers.contains(MapLayerType.airports))
-                      WidgetLayer(
-                        allowInteraction: true,
+                      MarkerLayer(
                         markers: state.airports.map((airport) {
                           return Marker(
-                            point: Geographic(
-                              lat: airport.latitude,
-                              lon: airport.longitude,
-                            ),
-                            size: const Size(32, 32),
+                            point: LatLng(airport.latitude, airport.longitude),
+                            width: 32,
+                            height: 32,
                             child: GestureDetector(
                               onTap: () {
-                                // Add airport to flight plan
                                 context.read<FlightPlanBloc>().add(
                                   WaypointAdded(
                                     Waypoint(
@@ -501,21 +427,23 @@ class _MapReadyView extends StatelessWidget {
                           );
                         }).toList(),
                       ),
+
+                    // ── Ownship Telemetry Marker ──
                     BlocBuilder<TelemetryBloc, TelemetryState>(
                       builder: (context, telemetryState) {
                         if (telemetryState is TelemetryActive) {
-                          return WidgetLayer(
+                          return MarkerLayer(
                             markers: [
                               Marker(
-                                point: Geographic(
-                                  lat: telemetryState.data.latitude,
-                                  lon: telemetryState.data.longitude,
+                                point: LatLng(
+                                  telemetryState.data.latitude,
+                                  telemetryState.data.longitude,
                                 ),
-                                size: const Size(48, 48),
+                                width: 48,
+                                height: 48,
                                 child: Transform.rotate(
-                                  angle:
-                                      (telemetryState.data.trueTrack *
-                                          3.1415926535) /
+                                  angle: telemetryState.data.trueTrack *
+                                      math.pi /
                                       180.0,
                                   child: const Icon(
                                     Icons.flight,
@@ -527,33 +455,35 @@ class _MapReadyView extends StatelessWidget {
                             ],
                           );
                         }
-                        return const SizedBox.shrink();
+                        return const MarkerLayer(markers: []);
                       },
                     ),
+
+                    // ── Traffic Markers ──
                     if (state.visibleLayers.contains(MapLayerType.traffic))
                       BlocBuilder<TrafficBloc, TrafficState>(
                         builder: (context, trafficState) {
                           if (trafficState is TrafficActive) {
-                            return WidgetLayer(
+                            return MarkerLayer(
                               markers: trafficState.targets.map((target) {
                                 return Marker(
-                                  point: Geographic(
-                                    lat: target.latitude,
-                                    lon: target.longitude,
+                                  point: LatLng(
+                                    target.latitude,
+                                    target.longitude,
                                   ),
-                                  size: const Size(64, 48),
+                                  width: 64,
+                                  height: 48,
                                   child: Column(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Transform.rotate(
-                                        angle:
-                                            (target.trackDegrees *
-                                                3.1415926535) /
+                                        angle: target.trackDegrees *
+                                            math.pi /
                                             180.0,
                                         child: const Icon(
-                                          Icons.navigation,
+                                          Icons.flight,
                                           color: Colors.cyanAccent,
-                                          size: 24,
+                                          size: 20,
                                         ),
                                       ),
                                       Container(
@@ -586,7 +516,7 @@ class _MapReadyView extends StatelessWidget {
                               }).toList(),
                             );
                           }
-                          return const SizedBox.shrink();
+                          return const MarkerLayer(markers: []);
                         },
                       ),
                   ],
@@ -619,7 +549,10 @@ class _MapReadyView extends StatelessWidget {
                     MapConstants.minZoom,
                     MapConstants.maxZoom,
                   );
-                  mapController?.animateCamera(zoom: newZoom);
+                  mapController.move(
+                    mapController.camera.center,
+                    newZoom,
+                  );
                   context.read<MapBloc>().add(MapZoomChanged(zoom: newZoom));
                 },
                 onZoomOut: () {
@@ -627,7 +560,10 @@ class _MapReadyView extends StatelessWidget {
                     MapConstants.minZoom,
                     MapConstants.maxZoom,
                   );
-                  mapController?.animateCamera(zoom: newZoom);
+                  mapController.move(
+                    mapController.camera.center,
+                    newZoom,
+                  );
                   context.read<MapBloc>().add(MapZoomChanged(zoom: newZoom));
                 },
                 onLayerToggle: (layer) {
@@ -682,7 +618,7 @@ class _MapReadyView extends StatelessWidget {
         ),
 
         // ── Floating Panels ──
-        Positioned(
+        const Positioned(
           top: 60,
           right: 0,
           child: Row(

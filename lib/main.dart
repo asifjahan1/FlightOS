@@ -45,6 +45,9 @@ Future<void> main() async {
   // After the first frame is painted, do the heavy lifting:
   // maximize the window and seed the database.
   WidgetsBinding.instance.addPostFrameCallback((_) async {
+    // Give the OpenGL/EGL surface time to initialize on Linux
+    // before changing the window geometry.
+    await Future<void>.delayed(const Duration(milliseconds: 500));
     try {
       await windowManager.maximize();
     } catch (e) {
