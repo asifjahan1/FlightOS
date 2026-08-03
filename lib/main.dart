@@ -36,12 +36,16 @@ Future<void> main() async {
   // Initialize dependency injection
   await configureDependencies();
 
-  // Seed initial data (wrap in try-catch to prevent ANR if sqlite3 is completely missing)
-  try {
-    await sl<AirportSeeder>().seedDatabaseIfEmpty();
-  } catch (e, stack) {
-    debugPrint('CRITICAL: Failed to initialize database: $e\n$stack');
-  }
-
+  // Launch the UI IMMEDIATELY — never block the main isolate before runApp().
   runApp(const SkyNavApp());
+
+  // Seed the database AFTER the first frame is painted so the window
+  // stays responsive and the OS never flags "not responding".
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    try {
+      await sl<AirportSeeder>().seedDatabaseIfEmpty();
+    } catch (e, stack) {
+      debugPrint('WARNING: Database seeding failed: $e\n$stack');
+    }
+  });
 }
