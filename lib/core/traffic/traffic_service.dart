@@ -145,12 +145,12 @@ class OpenSkyTrafficService implements TrafficService {
     final center = _latestLocation;
     if (center == null) return;
 
-    // Bounding box of roughly ~35 miles around the aircraft.
-    // 1 degree latitude ~ 69 miles. So +/- 0.5 degrees.
-    final lamin = center.latitude - 0.5;
-    final lamax = center.latitude + 0.5;
-    final lomin = center.longitude - 0.5;
-    final lomax = center.longitude + 0.5;
+    // Bounding box to fetch a MASSIVE amount of traffic (matching the OpenSky website screenshot).
+    // Using +/- 5.0 degrees covers roughly a 700x700 mile area, bringing in hundreds of planes!
+    final lamin = center.latitude - 5.0;
+    final lamax = center.latitude + 5.0;
+    final lomin = center.longitude - 5.0;
+    final lomax = center.longitude + 5.0;
 
     final url = Uri.parse(
       'https://opensky-network.org/api/states/all?lamin=$lamin&lomin=$lomin&lamax=$lamax&lomax=$lomax',
