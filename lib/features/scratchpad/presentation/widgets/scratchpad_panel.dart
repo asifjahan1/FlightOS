@@ -19,7 +19,7 @@ class ScratchpadPanel extends StatelessWidget {
           decoration: BoxDecoration(
             color: const Color(0xFFFDFBF7), // Yellowish paper color
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.brown.withValues(alpha: 0.3), width: 1),
+            border: Border.all(color: Colors.brown.withValues(alpha: 0.3)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.3),
@@ -71,7 +71,7 @@ class ScratchpadPanel extends StatelessWidget {
               ),
               // Editor
               Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.all(8),
                 child: TextFormField(
                   initialValue: state.text,
                   onChanged: (val) {

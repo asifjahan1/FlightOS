@@ -21,7 +21,7 @@ class ChecklistPanel extends StatelessWidget {
           decoration: BoxDecoration(
             color: const Color(0xFF1E2127).withValues(alpha: 0.95),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white24, width: 1),
+            border: Border.all(color: Colors.white24),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.5),

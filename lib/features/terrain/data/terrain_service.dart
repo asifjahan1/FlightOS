@@ -16,7 +16,7 @@ class TerrainService {
     final hill1 = sin(latRad) * cos(lonRad) * 1000;
     final hill2 = sin(latRad * 2.5 + lonRad * 1.5) * 500;
 
-    var elevation = baseElevation + hill1 + hill2;
+    final elevation = baseElevation + hill1 + hill2;
     return max(
       0,
       elevation,

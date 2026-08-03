@@ -53,3 +53,4 @@ class AirportDao extends DatabaseAccessor<AppDatabase> with _$AirportDaoMixin {
     });
   }
 }
+

@@ -152,7 +152,7 @@ class GeolocatorLocationService implements LocationService {
 
   Stream<TelemetryData> _simulateGps() {
     final controller = StreamController<TelemetryData>();
-    int tickCount = 0;
+    var tickCount = 0;
 
     _simulatorTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       // Very crude simulation: move aircraft Northeast
