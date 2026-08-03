@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math' as math;
+import 'package:http/http.dart' as http;
 import 'package:injectable/injectable.dart';
 import 'package:skynav/core/location/location_service.dart';
 import 'package:skynav/features/telemetry/domain/entities/telemetry_data.dart';
@@ -12,7 +14,6 @@ abstract class TrafficService {
 
 /// A simulated traffic service that generates realistic moving traffic
 /// around the ownship's current location.
-@LazySingleton(as: TrafficService)
 class SimulatorTrafficService implements TrafficService {
   SimulatorTrafficService(this._locationService);
 
@@ -85,5 +86,131 @@ class SimulatorTrafficService implements TrafficService {
       ));
     }
     _ghosts = updated;
+  }
+}
+
+/// Real-time traffic service using OpenSky Network API.
+@LazySingleton(as: TrafficService)
+class OpenSkyTrafficService implements TrafficService {
+  OpenSkyTrafficService(this._locationService);
+
+  final LocationService _locationService;
+  Timer? _pollingTimer;
+  StreamSubscription<TelemetryData>? _locationSub;
+  TelemetryData? _latestLocation;
+  List<TrafficTarget> _targets = [];
+
+  @override
+  Stream<List<TrafficTarget>> getTrafficStream() {
+    final controller = StreamController<List<TrafficTarget>>();
+
+    _locationSub = _locationService.getPositionStream().listen((data) {
+      _latestLocation = data;
+    });
+
+    // OpenSky data refreshes roughly every 10 seconds.
+    _pollingTimer = Timer.periodic(const Duration(seconds: 10), (timer) async {
+      if (_latestLocation == null) return;
+      
+      await _fetchTraffic();
+      controller.add(List.unmodifiable(_targets));
+    });
+
+    // Initial fetch
+    Future.delayed(const Duration(seconds: 2), () async {
+       if (_latestLocation != null) {
+          await _fetchTraffic();
+          controller.add(List.unmodifiable(_targets));
+       }
+    });
+
+    controller.onCancel = () {
+      _pollingTimer?.cancel();
+      _locationSub?.cancel();
+      controller.close();
+    };
+
+    return controller.stream;
+  }
+
+  Future<void> _fetchTraffic() async {
+    if (_latestLocation == null) return;
+
+    // Bounding box of roughly ~35 miles around the aircraft.
+    // 1 degree latitude ~ 69 miles. So +/- 0.5 degrees.
+    final center = _latestLocation!;
+    final lamin = center.latitude - 0.5;
+    final lamax = center.latitude + 0.5;
+    final lomin = center.longitude - 0.5;
+    final lomax = center.longitude + 0.5;
+
+    final url = Uri.parse(
+        'https://opensky-network.org/api/states/all?lamin=$lamin&lomin=$lomin&lamax=$lamax&lomax=$lomax');
+
+    try {
+      final response = await http.get(url).timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        // ignore: avoid_dynamic_calls
+        final states = data['states'] as List<dynamic>?;
+        
+        if (states == null) {
+          _targets = [];
+          return;
+        }
+
+        final parsedTargets = <TrafficTarget>[];
+
+        for (final state in states) {
+           // OpenSky state array format:
+           // 0: icao24 (string)
+           // 1: callsign (string)
+           // 2: origin_country (string)
+           // 3: time_position (int)
+           // 4: last_contact (int)
+           // 5: longitude (float)
+           // 6: latitude (float)
+           // 7: baro_altitude (float)
+           // 8: on_ground (boolean)
+           // 9: velocity (float) m/s
+           // 10: true_track (float)
+           // ...
+
+           // ignore: avoid_dynamic_calls
+           final icao = state[0]?.toString() ?? 'UNKNOWN';
+           // ignore: avoid_dynamic_calls
+           final callsignRaw = state[1]?.toString().trim();
+           final callsign = (callsignRaw != null && callsignRaw.isNotEmpty) ? callsignRaw : null;
+           
+           // ignore: avoid_dynamic_calls
+           final lon = (state[5] as num?)?.toDouble();
+           // ignore: avoid_dynamic_calls
+           final lat = (state[6] as num?)?.toDouble();
+           // ignore: avoid_dynamic_calls
+           final altMeters = (state[7] as num?)?.toDouble();
+           // ignore: avoid_dynamic_calls
+           final velocityMps = (state[9] as num?)?.toDouble() ?? 0.0;
+           // ignore: avoid_dynamic_calls
+           final track = (state[10] as num?)?.toDouble() ?? 0.0;
+
+           if (lat != null && lon != null && altMeters != null) {
+              parsedTargets.add(TrafficTarget(
+                icaoHex: icao,
+                callsign: callsign,
+                latitude: lat,
+                longitude: lon,
+                altitudeFeet: altMeters * 3.28084,
+                groundSpeedKnots: velocityMps * 1.94384,
+                trackDegrees: track,
+              ));
+           }
+        }
+        
+        _targets = parsedTargets;
+      }
+    } catch (e) {
+      // Ignore network errors to keep the stream running
+      // Optionally fallback to cached _targets or clear them depending on staleness.
+    }
   }
 }

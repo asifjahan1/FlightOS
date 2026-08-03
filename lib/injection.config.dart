@@ -53,7 +53,7 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i695.TelemetryBloc(gh<_i406.LocationService>()),
     );
     gh.lazySingleton<_i290.TrafficService>(
-      () => _i290.SimulatorTrafficService(gh<_i406.LocationService>()),
+      () => _i290.OpenSkyTrafficService(gh<_i406.LocationService>()),
     );
     gh.lazySingleton<_i969.AirportSeeder>(
       () => _i969.AirportSeeder(gh<_i234.AppDatabase>()),

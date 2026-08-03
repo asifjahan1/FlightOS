@@ -1,5 +1,6 @@
-import 'dart:math';
 import 'dart:convert';
+import 'dart:math';
+
 import 'package:http/http.dart' as http;
 import 'package:injectable/injectable.dart';
 import 'package:skynav/features/weather/domain/entities/weather_data.dart';
@@ -13,14 +14,20 @@ class WeatherService {
   Future<String?> getLatestRadarUrl() async {
     if (_cachedRadarUrl != null) return _cachedRadarUrl;
     try {
-      final response = await http.get(Uri.parse('https://api.rainviewer.com/public/weather-maps.json'));
+      final response = await http.get(
+        Uri.parse('https://api.rainviewer.com/public/weather-maps.json'),
+      );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        // ignore: avoid_dynamic_calls
         final List<dynamic> past = data['radar']['past'];
         if (past.isNotEmpty) {
           final last = past.last;
+          // ignore: avoid_dynamic_calls
           final time = last['time'];
-          _cachedRadarUrl = 'https://tilecache.rainviewer.com/v2/radar/$time/256/{z}/{x}/{y}/2/1_1.png';
+          // ignore: join_return_with_assignment
+          _cachedRadarUrl =
+              'https://tilecache.rainviewer.com/v2/radar/$time/256/{z}/{x}/{y}/2/1_1.png';
           return _cachedRadarUrl;
         }
       }
@@ -33,15 +40,15 @@ class WeatherService {
     if (_cache.containsKey(airportId)) {
       return _cache[airportId]!;
     }
-    
-    await Future.delayed(const Duration(milliseconds: 50)); 
-    
+
+    await Future.delayed(const Duration(milliseconds: 50));
+
     // Generate a random flight category
-    final int categoryVal = _random.nextInt(100);
+    final categoryVal = _random.nextInt(100);
     FlightCategory category;
     String vis;
     String clouds;
-    
+
     if (categoryVal < 60) {
       category = FlightCategory.vfr;
       vis = '10SM';
@@ -60,13 +67,18 @@ class WeatherService {
       clouds = 'OVC002';
     }
 
-    final String windDir = (_random.nextInt(36) * 10).toString().padLeft(3, '0');
-    final String windSpeed = (_random.nextInt(15) + 5).toString().padLeft(2, '0');
-    final String temp = (_random.nextInt(20) + 10).toString().padLeft(2, '0');
-    final String dew = (int.parse(temp) - _random.nextInt(5)).toString().padLeft(2, '0');
+    final windDir = (_random.nextInt(36) * 10).toString().padLeft(3, '0');
+    final windSpeed = (_random.nextInt(15) + 5).toString().padLeft(2, '0');
+    final temp = (_random.nextInt(20) + 10).toString().padLeft(2, '0');
+    final dew = (int.parse(temp) - _random.nextInt(5)).toString().padLeft(
+      2,
+      '0',
+    );
 
-    final rawMetar = 'METAR $airportId 123456Z ${windDir}${windSpeed}KT $vis $clouds ${temp}/${dew} A2992';
-    final rawTaf = 'TAF $airportId 123456Z 1212/1312 ${windDir}${windSpeed}KT $vis $clouds';
+    final rawMetar =
+        'METAR $airportId 123456Z $windDir $windSpeed KT $vis $clouds $temp/$dew A2992';
+    final rawTaf =
+        'TAF $airportId 123456Z 1212/1312 $windDir $windSpeed KT $vis $clouds';
 
     final report = WeatherReport(
       airportId: airportId,
