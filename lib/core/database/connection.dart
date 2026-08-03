@@ -9,11 +9,23 @@ import 'package:sqlite3/open.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 DynamicLibrary _openOnLinux() {
-  try {
-    return DynamicLibrary.open('libsqlite3.so');
-  } catch (_) {
-    return DynamicLibrary.open('libsqlite3.so.0');
+  final libraryNames = [
+    'libsqlite3.so',
+    'libsqlite3.so.0',
+    'libsqlite3.so.1',
+    '/usr/lib/x86_64-linux-gnu/libsqlite3.so',
+    '/usr/lib/x86_64-linux-gnu/libsqlite3.so.0',
+    '/usr/lib/libsqlite3.so',
+    '/usr/lib/libsqlite3.so.0',
+  ];
+
+  for (final name in libraryNames) {
+    try {
+      return DynamicLibrary.open(name);
+    } catch (_) {}
   }
+  
+  throw ArgumentError('Failed to load SQLite3 dynamic library. Please install it using `sudo apt-get install libsqlite3-0` or `sudo apt-get install sqlite3`');
 }
 
 LazyDatabase openConnection() {

@@ -36,8 +36,12 @@ Future<void> main() async {
   // Initialize dependency injection
   await configureDependencies();
 
-  // Seed initial data
-  await sl<AirportSeeder>().seedDatabaseIfEmpty();
+  // Seed initial data (wrap in try-catch to prevent ANR if sqlite3 is completely missing)
+  try {
+    await sl<AirportSeeder>().seedDatabaseIfEmpty();
+  } catch (e, stack) {
+    debugPrint('CRITICAL: Failed to initialize database: $e\n$stack');
+  }
 
   runApp(const SkyNavApp());
 }
