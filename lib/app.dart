@@ -13,6 +13,8 @@ import 'package:skynav/features/map/presentation/bloc/map_bloc.dart';
 import 'package:skynav/features/map/presentation/pages/map_page.dart';
 import 'package:skynav/features/telemetry/presentation/bloc/telemetry_bloc.dart';
 import 'package:skynav/features/traffic/presentation/bloc/traffic_bloc.dart';
+import 'package:skynav/features/airspace/presentation/bloc/airspace_bloc.dart';
+import 'package:skynav/features/airspace/presentation/bloc/airspace_event.dart';
 import 'package:skynav/injection.dart';
 
 /// Root application widget.
@@ -34,6 +36,9 @@ class SkyNavApp extends StatelessWidget {
         ),
         BlocProvider<TrafficBloc>(
           create: (_) => sl<TrafficBloc>()..add(const TrafficStarted()),
+        ),
+        BlocProvider<AirspaceBloc>(
+          create: (_) => sl<AirspaceBloc>()..add(AirspacesLoaded()),
         ),
       ],
       child: MaterialApp(

@@ -19,6 +19,8 @@ import 'features/airport/data/repositories/airport_repository_impl.dart'
     as _i505;
 import 'features/airport/data/seed/airport_seeder.dart' as _i969;
 import 'features/airport/domain/repositories/airport_repository.dart' as _i1064;
+import 'features/airspace/data/airspace_service.dart' as _i654;
+import 'features/airspace/presentation/bloc/airspace_bloc.dart' as _i949;
 import 'features/flight_plan/presentation/bloc/flight_plan_bloc.dart' as _i1022;
 import 'features/map/presentation/bloc/map_bloc.dart' as _i236;
 import 'features/telemetry/presentation/bloc/telemetry_bloc.dart' as _i695;
@@ -33,6 +35,7 @@ extension GetItInjectableX on _i174.GetIt {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
     gh.factory<_i1022.FlightPlanBloc>(() => _i1022.FlightPlanBloc());
     gh.lazySingleton<_i234.AppDatabase>(() => _i234.AppDatabase());
+    gh.lazySingleton<_i654.AirspaceService>(() => _i654.AirspaceService());
     gh.lazySingleton<_i406.LocationService>(
       () => _i406.GeolocatorLocationService(),
     );
@@ -44,6 +47,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i969.AirportSeeder>(
       () => _i969.AirportSeeder(gh<_i234.AppDatabase>()),
+    );
+    gh.factory<_i949.AirspaceBloc>(
+      () => _i949.AirspaceBloc(gh<_i654.AirspaceService>()),
     );
     gh.lazySingleton<_i1064.AirportRepository>(
       () => _i505.AirportRepositoryImpl(gh<_i234.AppDatabase>()),

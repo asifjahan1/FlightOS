@@ -1,0 +1,58 @@
+[
+  {
+    "id": "KSFO-CLASS-B-SFC",
+    "name": "KSFO Class B",
+    "type": "Class B",
+    "floor": 0,
+    "ceiling": 10000,
+    "boundary": [
+      [37.8, -122.6],
+      [37.8, -122.1],
+      [37.4, -122.1],
+      [37.4, -122.6],
+      [37.8, -122.6]
+    ]
+  },
+  {
+    "id": "KSFO-CLASS-B-3000",
+    "name": "KSFO Class B 3000+",
+    "type": "Class B",
+    "floor": 3000,
+    "ceiling": 10000,
+    "boundary": [
+      [38.0, -122.8],
+      [38.0, -121.9],
+      [37.2, -121.9],
+      [37.2, -122.8],
+      [38.0, -122.8]
+    ]
+  },
+  {
+    "id": "R-2508",
+    "name": "Restricted Area R-2508",
+    "type": "Restricted",
+    "floor": 0,
+    "ceiling": 20000,
+    "boundary": [
+      [35.5, -118.0],
+      [35.5, -117.0],
+      [34.5, -117.0],
+      [34.5, -118.0],
+      [35.5, -118.0]
+    ]
+  },
+  {
+    "id": "VGHS-CLASS-C",
+    "name": "Dhaka VGHS Airspace",
+    "type": "Class B",
+    "floor": 0,
+    "ceiling": 15000,
+    "boundary": [
+      [24.0, 90.5],
+      [24.0, 90.3],
+      [23.7, 90.3],
+      [23.7, 90.5],
+      [24.0, 90.5]
+    ]
+  }
+]

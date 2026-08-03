@@ -5,9 +5,11 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:maplibre/maplibre.dart';
+import 'package:window_manager/window_manager.dart';
 
 import 'package:skynav/core/constants/map_constants.dart';
 import 'package:skynav/core/theme/app_theme.dart';
@@ -19,6 +21,9 @@ import 'package:skynav/features/map/presentation/widgets/map_info_bar.dart';
 import 'package:skynav/features/telemetry/presentation/bloc/telemetry_bloc.dart';
 import 'package:skynav/features/telemetry/presentation/widgets/telemetry_panel.dart';
 import 'package:skynav/features/traffic/presentation/bloc/traffic_bloc.dart';
+import 'package:skynav/features/airspace/presentation/bloc/airspace_bloc.dart';
+import 'package:skynav/features/airspace/presentation/bloc/airspace_event.dart';
+import 'package:skynav/features/airspace/presentation/bloc/airspace_state.dart';
 
 /// The main map page — home screen of SkyNav.
 class MapPage extends StatefulWidget {
@@ -39,9 +44,57 @@ class _MapPageState extends State<MapPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: MultiBlocListener(
-        listeners: [
+    return Focus(
+      autofocus: true,
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent) {
+          final char = event.logicalKey.keyLabel.toLowerCase();
+          
+          if (char == '=') {
+            // Zoom In
+            final state = context.read<MapBloc>().state;
+            if (state is MapReady) {
+              final newZoom = (state.zoom + 1).clamp(MapConstants.minZoom, MapConstants.maxZoom);
+              _mapController?.animateCamera(zoom: newZoom);
+              context.read<MapBloc>().add(MapZoomChanged(zoom: newZoom));
+            }
+            return KeyEventResult.handled;
+          } else if (char == '-') {
+            // Zoom Out
+            final state = context.read<MapBloc>().state;
+            if (state is MapReady) {
+              final newZoom = (state.zoom - 1).clamp(MapConstants.minZoom, MapConstants.maxZoom);
+              _mapController?.animateCamera(zoom: newZoom);
+              context.read<MapBloc>().add(MapZoomChanged(zoom: newZoom));
+            }
+            return KeyEventResult.handled;
+          } else if (char == 't') {
+            // Toggle Traffic
+            context.read<MapBloc>().add(const MapLayerToggled(layer: MapLayerType.traffic));
+            return KeyEventResult.handled;
+          } else if (char == 'f') {
+            // Toggle Follow Mode
+            context.read<TelemetryBloc>().add(const TelemetryFollowToggled());
+            return KeyEventResult.handled;
+          } else if (char == 'c') {
+            // Clear Route
+            context.read<FlightPlanBloc>().add(const FlightPlanCleared());
+            return KeyEventResult.handled;
+          }
+        }
+        return KeyEventResult.ignored;
+      },
+      child: Scaffold(
+        body: Column(
+          children: [
+            const WindowCaption(
+              brightness: Brightness.dark,
+              title: Text('SkyNav', style: TextStyle(color: Colors.white70)),
+              backgroundColor: Color(0xFF0D1117),
+            ),
+            Expanded(
+              child: MultiBlocListener(
+                listeners: [
           BlocListener<MapBloc, MapState>(
             listener: (context, state) {
               if (state is MapReady) {
@@ -56,14 +109,23 @@ class _MapPageState extends State<MapPage> {
           ),
           BlocListener<TelemetryBloc, TelemetryState>(
             listener: (context, state) {
-              if (state is TelemetryActive && state.followModeEnabled && _mapController != null) {
-                _mapController?.animateCamera(
-                  center: Geographic(
-                    lat: state.data.latitude,
-                    lon: state.data.longitude,
-                  ),
-                  zoom: 12,
-                );
+              if (state is TelemetryActive) {
+                // Check airspace proximity
+                context.read<AirspaceBloc>().add(AirspaceLocationUpdated(
+                  latitude: state.data.latitude,
+                  longitude: state.data.longitude,
+                  altitude: state.data.altitudeMslFeet,
+                ));
+                
+                if (state.followModeEnabled && _mapController != null) {
+                  _mapController?.animateCamera(
+                    center: Geographic(
+                      lat: state.data.latitude,
+                      lon: state.data.longitude,
+                    ),
+                    zoom: 12,
+                  );
+                }
               }
             },
           ),
@@ -80,6 +142,10 @@ class _MapPageState extends State<MapPage> {
               MapError(:final message) => _MapErrorView(message: message),
             };
           },
+        ),
+        ),
+      ),
+          ],
         ),
       ),
     );
@@ -160,13 +226,38 @@ class _MapReadyView extends StatelessWidget {
     return Stack(
       children: [
         // ── Main Map ──
-        BlocBuilder<FlightPlanBloc, FlightPlanState>(
-          builder: (context, flightPlanState) {
-            final activePlan = flightPlanState is FlightPlanActive
-                ? flightPlanState.flightPlan
-                : null;
+        BlocBuilder<AirspaceBloc, AirspaceState>(
+          builder: (context, airspaceState) {
+            return BlocBuilder<FlightPlanBloc, FlightPlanState>(
+              builder: (context, flightPlanState) {
+                final activePlan = flightPlanState is FlightPlanActive
+                    ? flightPlanState.flightPlan
+                    : null;
 
-            final layers = <Layer>[];
+                final layers = <Layer>[];
+                
+                if (airspaceState is AirspaceLoaded) {
+                  for (final airspace in airspaceState.airspaces) {
+                    final color = airspace.type == 'Class B' ? Colors.blue : Colors.red;
+                    layers.add(
+                      PolygonLayer(
+                        polygons: [
+                          Feature<Polygon>(
+                            geometry: Polygon([
+                              PositionSeries.from(
+                                airspace.boundary
+                                    .map((List<double> c) => Position.create(x: c[1], y: c[0]))
+                                    .toList(),
+                              )
+                            ]),
+                          ),
+                        ],
+                        color: color.withValues(alpha: 0.15),
+                        outlineColor: color,
+                      ),
+                    );
+                  }
+                }
             if (activePlan != null && activePlan.waypoints.length > 1) {
               layers.add(
                 PolylineLayer(
@@ -361,11 +452,13 @@ class _MapReadyView extends StatelessWidget {
                       }
                       return const SizedBox.shrink();
                     },
-                  ),
+                ),
               ],
             );
           },
-        ),
+        );
+      },
+    ),
 
         // ── Map Controls (top-right) ──
         Positioned(
@@ -459,6 +552,45 @@ class _MapReadyView extends StatelessWidget {
           left: 16,
           top: 80,
           child: TelemetryPanel(),
+        ),
+
+        // ── Airspace Alert Banner ──
+        BlocBuilder<AirspaceBloc, AirspaceState>(
+          builder: (context, state) {
+            if (state is AirspaceLoaded && state.currentAlert != null) {
+              return Positioned(
+                top: 40,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.redAccent,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.redAccent.withValues(alpha: 0.5),
+                          blurRadius: 10,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      '⚠️ ENTERING ${state.currentAlert!.name.toUpperCase()}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        letterSpacing: 1.1,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }
+            return const SizedBox.shrink();
+          },
         ),
       ],
     );
