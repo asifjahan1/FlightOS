@@ -8,12 +8,14 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:skynav/app.dart';
+import 'package:skynav/core/database/connection.dart';
 import 'package:skynav/features/airport/data/seed/airport_seeder.dart';
 import 'package:skynav/injection.dart';
 import 'package:window_manager/window_manager.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  setupSqliteDatabase();
 
   // Initialize window manager for kiosk-like behavior
   await windowManager.ensureInitialized();

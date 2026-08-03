@@ -12,6 +12,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import 'package:skynav/core/constants/app_constants.dart';
+import 'package:skynav/core/database/connection.dart';
 import 'package:skynav/database/daos/airport_dao.dart';
 import 'package:skynav/database/tables/airport_tables.dart';
 import 'package:skynav/database/tables/user_tables.dart';
@@ -105,6 +106,8 @@ class AppDatabase extends _$AppDatabase {
 /// Opens the SQLite database connection.
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
+    setupSqliteDatabase();
+
     final appDir = await getApplicationSupportDirectory();
     final dbPath = p.join(appDir.path, DatabaseConstants.userDb);
 
@@ -114,6 +117,14 @@ LazyDatabase _openConnection() {
       dbDir.createSync(recursive: true);
     }
 
-    return NativeDatabase.createInBackground(File(dbPath));
+    return NativeDatabase.createInBackground(
+      File(dbPath),
+      isolateSetup: () {
+        setupSqliteDatabase();
+      },
+      setup: (db) {
+        setupSqliteDatabase();
+      },
+    );
   });
 }
