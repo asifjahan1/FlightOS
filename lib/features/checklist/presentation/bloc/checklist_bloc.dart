@@ -71,8 +71,8 @@ class ChecklistBloc extends Bloc<ChecklistEvent, ChecklistState> {
   }
 
   void _loadInitial() {
-    final initialChecklists = [
-      const Checklist(
+    const initialChecklists = [
+      Checklist(
         id: 'c1',
         title: 'Pre-Flight',
         items: [
@@ -81,7 +81,7 @@ class ChecklistBloc extends Bloc<ChecklistEvent, ChecklistState> {
           ChecklistItem(id: 'i3', title: 'Flaps', action: 'DOWN'),
         ],
       ),
-      const Checklist(
+      Checklist(
         id: 'c2',
         title: 'Before Takeoff',
         items: [
@@ -95,7 +95,8 @@ class ChecklistBloc extends Bloc<ChecklistEvent, ChecklistState> {
         ],
       ),
     ];
-    emit(ChecklistLoaded(checklists: initialChecklists));
+    // ignore: invalid_use_of_visible_for_testing_member
+    emit(const ChecklistLoaded(checklists: initialChecklists));
   }
 
   void _onTogglePanel(

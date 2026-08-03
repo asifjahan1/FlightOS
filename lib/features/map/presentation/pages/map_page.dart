@@ -331,7 +331,8 @@ class _MapReadyView extends StatelessWidget {
                       Opacity(
                         opacity: 0.7,
                         child: TileLayer(
-                          urlTemplate: 'https://wms.chartbundle.com/tms/1.0.0/sec/{z}/{x}/{y}.png?type=google',
+                          // Chartbundle is permanently down. Using OpenTopoMap as a temporary fallback.
+                          urlTemplate: 'https://tile.opentopomap.org/{z}/{x}/{y}.png',
                           tileProvider: CancellableNetworkTileProvider(),
                           maxZoom: 12,
                         ),
@@ -342,7 +343,8 @@ class _MapReadyView extends StatelessWidget {
                       Opacity(
                         opacity: 0.7,
                         child: TileLayer(
-                          urlTemplate: 'https://wms.chartbundle.com/tms/1.0.0/enrl/{z}/{x}/{y}.png?type=google',
+                          // Chartbundle is permanently down. Using OpenTopoMap as a temporary fallback.
+                          urlTemplate: 'https://tile.opentopomap.org/{z}/{x}/{y}.png',
                           tileProvider: CancellableNetworkTileProvider(),
                           maxZoom: 12,
                         ),
