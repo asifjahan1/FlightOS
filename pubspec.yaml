@@ -11,7 +11,8 @@ dependencies:
     sdk: flutter
 
   # ── Map Engine ──
-  maplibre: ^0.3.5
+  flutter_map: ^7.0.2
+  flutter_map_cancellable_tile_provider: ^3.0.2
 
   # ── Database (Drift / SQLite) ──
   drift: ^2.22.0
