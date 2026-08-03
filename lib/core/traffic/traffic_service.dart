@@ -134,11 +134,11 @@ class OpenSkyTrafficService implements TrafficService {
   }
 
   Future<void> _fetchTraffic() async {
-    if (_latestLocation == null) return;
+    final center = _latestLocation;
+    if (center == null) return;
 
     // Bounding box of roughly ~35 miles around the aircraft.
     // 1 degree latitude ~ 69 miles. So +/- 0.5 degrees.
-    final center = _latestLocation!;
     final lamin = center.latitude - 0.5;
     final lamax = center.latitude + 0.5;
     final lomin = center.longitude - 0.5;
