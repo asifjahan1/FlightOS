@@ -84,6 +84,20 @@ class MapControls extends StatelessWidget {
             ),
             const _ControlDivider(),
             _LayerToggle(
+              icon: Icons.map,
+              label: 'VFR Chart',
+              isActive: visibleLayers.contains(MapLayerType.vfrChart),
+              onTap: () => onLayerToggle(MapLayerType.vfrChart),
+            ),
+            const _ControlDivider(),
+            _LayerToggle(
+              icon: Icons.layers,
+              label: 'IFR Low',
+              isActive: visibleLayers.contains(MapLayerType.ifrChart),
+              onTap: () => onLayerToggle(MapLayerType.ifrChart),
+            ),
+            const _ControlDivider(),
+            _LayerToggle(
               icon: Icons.terrain,
               label: 'Terrain',
               isActive: visibleLayers.contains(MapLayerType.terrain),

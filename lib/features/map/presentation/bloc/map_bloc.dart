@@ -182,6 +182,8 @@ class MapBounds extends Equatable {
 /// Available map layers.
 enum MapLayerType {
   basemap,
+  vfrChart,
+  ifrChart,
   airports,
   navaids,
   airspace,
