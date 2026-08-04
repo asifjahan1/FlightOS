@@ -13,16 +13,24 @@ import 'package:window_manager/window_manager.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Supabase
-  await Supabase.initialize(
-    url: 'https://qpfglplzegtaglybqekx.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFwZmdscGx6ZWd0YWdseWJxZWt4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4MzU5MTgsImV4cCI6MjEwMTQxMTkxOH0.yedTWK0BlOEt76b9dhTwt3qmT_7lh3mAVHAZT9k-rAE',
-  );
+  try {
+    // Initialize Supabase
+    await Supabase.initialize(
+      url: 'https://qpfglplzegtaglybqekx.supabase.co',
+      anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFwZmdscGx6ZWd0YWdseWJxZWt4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4MzU5MTgsImV4cCI6MjEwMTQxMTkxOH0.yedTWK0BlOEt76b9dhTwt3qmT_7lh3mAVHAZT9k-rAE',
+    );
 
-  // Sign in anonymously if not already signed in (so we have an ID for tracking)
-  final supabase = Supabase.instance.client;
-  if (supabase.auth.currentSession == null) {
-    await supabase.auth.signInAnonymously();
+    // Sign in anonymously if not already signed in (so we have an ID for tracking)
+    final supabase = Supabase.instance.client;
+    if (supabase.auth.currentSession == null) {
+      try {
+        await supabase.auth.signInAnonymously();
+      } catch (e) {
+        debugPrint('Supabase anonymous sign in failed: $e');
+      }
+    }
+  } catch (e) {
+    debugPrint('Supabase initialization or sign-in failed: $e');
   }
 
   setupSqliteDatabase();
