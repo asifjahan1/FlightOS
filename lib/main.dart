@@ -22,7 +22,7 @@ Future<void> main() async {
     minimumSize: const Size(1024, 768),
     center: true,
     backgroundColor: const Color(0xFF0D1117),
-    titleBarStyle: Platform.isLinux
+    titleBarStyle: Platform.isLinux || Platform.isMacOS
         ? TitleBarStyle.normal
         : TitleBarStyle.hidden,
   );

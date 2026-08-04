@@ -111,8 +111,8 @@ class _MapPageState extends State<MapPage> {
       child: Scaffold(
         body: Column(
           children: [
-            // Custom title bar — on Linux use native title bar.
-            if (Platform.isLinux)
+            // Custom title bar — on Linux/macOS use native title bar.
+            if (Platform.isLinux || Platform.isMacOS)
               const SizedBox.shrink()
             else
               const WindowCaption(
