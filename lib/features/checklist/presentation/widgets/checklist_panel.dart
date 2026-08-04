@@ -92,29 +92,32 @@ class ChecklistPanel extends StatelessWidget {
                   itemCount: activeChecklist.items.length,
                   itemBuilder: (context, index) {
                     final item = activeChecklist.items[index];
-                    return CheckboxListTile(
-                      title: Text(
-                        item.title,
-                        style: TextStyle(
-                          color: item.isCompleted ? Colors.white54 : Colors.white,
-                          decoration: item.isCompleted ? TextDecoration.lineThrough : null,
+                    return Material(
+                      color: Colors.transparent,
+                      child: CheckboxListTile(
+                        title: Text(
+                          item.title,
+                          style: TextStyle(
+                            color: item.isCompleted ? Colors.white54 : Colors.white,
+                            decoration: item.isCompleted ? TextDecoration.lineThrough : null,
+                          ),
                         ),
+                        subtitle: item.action != null
+                            ? Text(
+                                item.action!,
+                                style: TextStyle(
+                                  color: item.isCompleted ? Colors.blue.withValues(alpha: 0.5) : Colors.blue,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              )
+                            : null,
+                        value: item.isCompleted,
+                        onChanged: (value) {
+                          context.read<ChecklistBloc>().add(ToggleChecklistItem(activeChecklist.id, item.id));
+                        },
+                        activeColor: Colors.blue,
+                        checkColor: Colors.white,
                       ),
-                      subtitle: item.action != null
-                          ? Text(
-                              item.action!,
-                              style: TextStyle(
-                                color: item.isCompleted ? Colors.blue.withValues(alpha: 0.5) : Colors.blue,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            )
-                          : null,
-                      value: item.isCompleted,
-                      onChanged: (value) {
-                        context.read<ChecklistBloc>().add(ToggleChecklistItem(activeChecklist.id, item.id));
-                      },
-                      activeColor: Colors.blue,
-                      checkColor: Colors.white,
                     );
                   },
                 ),

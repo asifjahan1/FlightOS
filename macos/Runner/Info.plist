@@ -32,5 +32,7 @@
 	<string>SkyNav needs access to location for map telemetry.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>SkyNav needs access to location for map telemetry.</string>
+	<key>NSLocationUsageDescription</key>
+	<string>SkyNav needs access to location for map telemetry.</string>
 </dict>
 </plist>

@@ -350,6 +350,27 @@ class _MapReadyView extends StatelessWidget {
                         ),
                       ),
 
+                    // ── Terrain Overlay ──
+                    if (state.visibleLayers.contains(MapLayerType.terrain))
+                      Opacity(
+                        opacity: 0.6,
+                        child: TileLayer(
+                          urlTemplate: 'https://tile.opentopomap.org/{z}/{x}/{y}.png',
+                          tileProvider: CancellableNetworkTileProvider(),
+                          maxZoom: 17,
+                        ),
+                      ),
+
+                    // ── Weather Radar Overlay ──
+                    if (state.visibleLayers.contains(MapLayerType.weather))
+                      Opacity(
+                        opacity: 0.6,
+                        child: TileLayer(
+                          urlTemplate: 'https://tilecache.rainviewer.com/v2/radar/1691234567/256/{z}/{x}/{y}/2/1_1.png',
+                          tileProvider: CancellableNetworkTileProvider(),
+                        ),
+                      ),
+
                     // ── Airspace Polygons ──
                     if (airspaceState is AirspaceLoaded)
                       PolygonLayer(
