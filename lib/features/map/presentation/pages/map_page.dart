@@ -321,7 +321,7 @@ class _MapReadyView extends StatelessWidget {
                     TileLayer(
                       urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                       userAgentPackageName: 'com.skynav.skynav',
-                      tileProvider: CancellableNetworkTileProvider(),
+                      tileProvider: NetworkTileProvider(),
                       maxZoom: MapConstants.maxZoom,
                       // Use a dark-themed tile server or apply color filter
                     ),
@@ -333,7 +333,7 @@ class _MapReadyView extends StatelessWidget {
                         child: TileLayer(
                           // Chartbundle is permanently down. Using OpenTopoMap as a temporary fallback.
                           urlTemplate: 'https://tile.opentopomap.org/{z}/{x}/{y}.png',
-                          tileProvider: CancellableNetworkTileProvider(),
+                          tileProvider: NetworkTileProvider(),
                           maxZoom: 12,
                         ),
                       ),
@@ -345,7 +345,7 @@ class _MapReadyView extends StatelessWidget {
                         child: TileLayer(
                           // Chartbundle is permanently down. Using OpenTopoMap as a temporary fallback.
                           urlTemplate: 'https://tile.opentopomap.org/{z}/{x}/{y}.png',
-                          tileProvider: CancellableNetworkTileProvider(),
+                          tileProvider: NetworkTileProvider(),
                           maxZoom: 12,
                         ),
                       ),
@@ -356,7 +356,7 @@ class _MapReadyView extends StatelessWidget {
                         opacity: 0.6,
                         child: TileLayer(
                           urlTemplate: 'https://tile.opentopomap.org/{z}/{x}/{y}.png',
-                          tileProvider: CancellableNetworkTileProvider(),
+                          tileProvider: NetworkTileProvider(),
                           maxZoom: 17,
                         ),
                       ),
@@ -367,7 +367,7 @@ class _MapReadyView extends StatelessWidget {
                         opacity: 0.6,
                         child: TileLayer(
                           urlTemplate: 'https://tilecache.rainviewer.com/v2/radar/1691234567/256/{z}/{x}/{y}/2/1_1.png',
-                          tileProvider: CancellableNetworkTileProvider(),
+                          tileProvider: NetworkTileProvider(),
                         ),
                       ),
 
@@ -441,7 +441,7 @@ class _MapReadyView extends StatelessWidget {
                                   ),
                                 ),
                                 child: const Icon(
-                                  Icons.local_airport,
+                                  Icons.location_on,
                                   color: AppTheme.accentPrimary,
                                   size: 16,
                                 ),

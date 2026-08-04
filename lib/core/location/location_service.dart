@@ -2,11 +2,12 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
-import 'package:http/http.dart' as http;
+
 import 'package:geolocator/geolocator.dart';
+import 'package:get_it/get_it.dart';
+import 'package:http/http.dart' as http;
 import 'package:injectable/injectable.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:get_it/get_it.dart';
 import 'package:skynav/core/database/daos/airport_dao.dart';
 import 'package:skynav/features/telemetry/domain/entities/telemetry_data.dart';
 
@@ -125,6 +126,20 @@ class GeolocatorLocationService implements LocationService {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
+        _useSimulator = true;
+      }
+    }
+
+    if (!_useSimulator) {
+      try {
+        // Test if the device can actually acquire a location (often fails on macOS desktop)
+        await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            timeLimit: Duration(seconds: 5),
+          ),
+        );
+      } catch (e) {
+        // If it fails or times out, fallback to simulator
         _useSimulator = true;
       }
     }
