@@ -7,10 +7,24 @@ import 'package:skynav/app.dart';
 import 'package:skynav/core/database/connection.dart';
 import 'package:skynav/features/airport/data/seed/airport_seeder.dart';
 import 'package:skynav/injection.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:window_manager/window_manager.dart';
-
+ 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Supabase
+  await Supabase.initialize(
+    url: 'https://qpfglplzegtaglybqekx.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFwZmdscGx6ZWd0YWdseWJxZWt4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4MzU5MTgsImV4cCI6MjEwMTQxMTkxOH0.yedTWK0BlOEt76b9dhTwt3qmT_7lh3mAVHAZT9k-rAE',
+  );
+
+  // Sign in anonymously if not already signed in (so we have an ID for tracking)
+  final supabase = Supabase.instance.client;
+  if (supabase.auth.currentSession == null) {
+    await supabase.auth.signInAnonymously();
+  }
+
   setupSqliteDatabase();
 
   // Initialize window manager for kiosk-like behavior

@@ -26,6 +26,7 @@ import 'package:skynav/features/map/presentation/widgets/map_controls.dart';
 import 'package:skynav/features/map/presentation/widgets/map_info_bar.dart';
 import 'package:skynav/features/scratchpad/presentation/widgets/scratchpad_panel.dart';
 import 'package:skynav/features/telemetry/presentation/bloc/telemetry_bloc.dart';
+import 'package:skynav/features/telemetry/presentation/widgets/fleet_layer.dart';
 import 'package:skynav/features/telemetry/presentation/widgets/telemetry_panel.dart';
 import 'package:skynav/features/terrain/presentation/bloc/terrain_bloc.dart';
 import 'package:skynav/features/terrain/presentation/bloc/terrain_event.dart';
@@ -475,6 +476,9 @@ class _MapReadyView extends StatelessWidget {
                         return const MarkerLayer(markers: []);
                       },
                     ),
+
+                    // ── Fleet Markers (Admin Only) ──
+                    const FleetLayer(),
 
                     // ── Traffic Markers ──
                     if (state.visibleLayers.contains(MapLayerType.traffic))

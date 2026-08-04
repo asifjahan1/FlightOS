@@ -151,21 +151,87 @@ class GeolocatorLocationService implements LocationService {
       await _loadSimLocation();
       yield* _simulateGps();
     } else {
-      yield* Geolocator.getPositionStream(
+      yield* _buildDeadReckoningStream();
+    }
+  }
+
+  Stream<TelemetryData> _buildDeadReckoningStream() {
+    final controller = StreamController<TelemetryData>();
+    StreamSubscription<Position>? gpsSub;
+    Timer? fallbackTimer;
+    Timer? timeoutTimer;
+    TelemetryData? lastKnown;
+
+    void emitDeadReckonedPosition() {
+      if (lastKnown == null) return;
+      // Calculate 1-second distance based on last known speed
+      final distMeters = (lastKnown!.groundSpeedKnots / 1.94384) * 1.0; 
+      final latOffset = (distMeters * math.cos(lastKnown!.trueTrack * math.pi / 180)) / 111320.0;
+      final lonOffset = (distMeters * math.sin(lastKnown!.trueTrack * math.pi / 180)) /
+          (111320.0 * math.cos(lastKnown!.latitude * math.pi / 180));
+
+      lastKnown = TelemetryData(
+        latitude: lastKnown!.latitude + latOffset,
+        longitude: lastKnown!.longitude + lonOffset,
+        altitudeMslFeet: lastKnown!.altitudeMslFeet,
+        groundSpeedKnots: lastKnown!.groundSpeedKnots,
+        trueTrack: lastKnown!.trueTrack,
+        accuracyMeters: 999, // 999 indicates offline simulated dead reckoning
+      );
+      controller.add(lastKnown!);
+    }
+
+    void startDeadReckoning() {
+      fallbackTimer?.cancel();
+      fallbackTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        emitDeadReckonedPosition();
+      });
+    }
+
+    void resetTimeout() {
+      timeoutTimer?.cancel();
+      fallbackTimer?.cancel();
+      // If no GPS update for 5 seconds, start dead reckoning
+      timeoutTimer = Timer(const Duration(seconds: 5), () {
+        startDeadReckoning();
+      });
+    }
+
+    controller.onListen = () {
+      gpsSub = Geolocator.getPositionStream(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
         ),
-      ).map((Position pos) {
-        return TelemetryData(
-          latitude: pos.latitude,
-          longitude: pos.longitude,
-          altitudeMslFeet: pos.altitude * 3.28084, // meters to feet
-          groundSpeedKnots: pos.speed * 1.94384, // m/s to knots
-          trueTrack: pos.heading,
-          accuracyMeters: pos.accuracy,
-        );
-      });
-    }
+      ).listen(
+        (Position pos) {
+          lastKnown = TelemetryData(
+            latitude: pos.latitude,
+            longitude: pos.longitude,
+            altitudeMslFeet: pos.altitude * 3.28084,
+            groundSpeedKnots: pos.speed * 1.94384,
+            trueTrack: pos.heading,
+            accuracyMeters: pos.accuracy,
+          );
+          controller.add(lastKnown!);
+          resetTimeout();
+        },
+        onError: (e) {
+          // If GPS stream fails, start dead reckoning immediately if we have a last position
+          if (lastKnown != null) {
+            startDeadReckoning();
+          }
+        },
+      );
+    };
+
+    controller.onCancel = () {
+      gpsSub?.cancel();
+      timeoutTimer?.cancel();
+      fallbackTimer?.cancel();
+      controller.close();
+    };
+
+    return controller.stream;
   }
 
   Stream<TelemetryData> _simulateGps() {

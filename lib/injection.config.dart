@@ -1,5 +1,14 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format width=80
 
+// **************************************************************************
+// InjectableConfigGenerator
+// **************************************************************************
+
+// ignore_for_file: type=lint
+// coverage:ignore-file
+
+// ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
 
@@ -16,6 +25,7 @@ import 'features/checklist/presentation/bloc/checklist_bloc.dart' as _i268;
 import 'features/flight_plan/presentation/bloc/flight_plan_bloc.dart' as _i1022;
 import 'features/map/presentation/bloc/map_bloc.dart' as _i236;
 import 'features/scratchpad/presentation/bloc/scratchpad_bloc.dart' as _i153;
+import 'features/telemetry/data/services/fleet_tracking_service.dart' as _i381;
 import 'features/telemetry/presentation/bloc/telemetry_bloc.dart' as _i695;
 import 'features/terrain/data/terrain_service.dart' as _i412;
 import 'features/terrain/presentation/bloc/terrain_bloc.dart' as _i13;
@@ -24,6 +34,7 @@ import 'features/weather/data/weather_service.dart' as _i12;
 import 'features/weather/presentation/bloc/weather_bloc.dart' as _i989;
 
 extension GetItInjectableX on _i174.GetIt {
+  // initializes the registration of main-scope dependencies inside of GetIt
   _i174.GetIt init({
     String? environment,
     _i526.EnvironmentFilter? environmentFilter,
@@ -34,16 +45,22 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i153.ScratchpadBloc>(() => _i153.ScratchpadBloc());
     gh.lazySingleton<_i234.AppDatabase>(() => _i234.AppDatabase());
     gh.lazySingleton<_i654.AirspaceService>(() => _i654.AirspaceService());
+    gh.lazySingleton<_i381.FleetTrackingService>(
+      () => _i381.FleetTrackingService(),
+    );
     gh.lazySingleton<_i412.TerrainService>(() => _i412.TerrainService());
     gh.lazySingleton<_i12.WeatherService>(() => _i12.WeatherService());
     gh.lazySingleton<_i406.LocationService>(
       () => _i406.GeolocatorLocationService(),
     );
-    gh.factory<_i695.TelemetryBloc>(
-      () => _i695.TelemetryBloc(gh<_i406.LocationService>()),
-    );
     gh.lazySingleton<_i290.TrafficService>(
       () => _i290.OpenSkyTrafficService(gh<_i406.LocationService>()),
+    );
+    gh.factory<_i695.TelemetryBloc>(
+      () => _i695.TelemetryBloc(
+        gh<_i406.LocationService>(),
+        gh<_i381.FleetTrackingService>(),
+      ),
     );
     gh.lazySingleton<_i969.AirportSeeder>(
       () => _i969.AirportSeeder(gh<_i234.AppDatabase>()),

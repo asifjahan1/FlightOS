@@ -5,6 +5,8 @@ import 'package:injectable/injectable.dart';
 import 'package:skynav/core/location/location_service.dart';
 import 'package:skynav/features/telemetry/domain/entities/telemetry_data.dart';
 
+import 'package:skynav/features/telemetry/data/services/fleet_tracking_service.dart';
+
 // ── Events ──
 sealed class TelemetryEvent extends Equatable {
   const TelemetryEvent();
@@ -67,13 +69,14 @@ class TelemetryActive extends TelemetryState {
 // ── BLoC ──
 @injectable
 class TelemetryBloc extends Bloc<TelemetryEvent, TelemetryState> {
-  TelemetryBloc(this._locationService) : super(const TelemetryInitial()) {
+  TelemetryBloc(this._locationService, this._fleetTrackingService) : super(const TelemetryInitial()) {
     on<TelemetryStarted>(_onStarted);
     on<_TelemetryUpdated>(_onUpdated);
     on<TelemetryFollowToggled>(_onFollowToggled);
   }
 
   final LocationService _locationService;
+  final FleetTrackingService _fleetTrackingService;
   StreamSubscription<TelemetryData>? _positionSubscription;
 
   void _onStarted(TelemetryStarted event, Emitter<TelemetryState> emit) {
@@ -84,6 +87,9 @@ class TelemetryBloc extends Bloc<TelemetryEvent, TelemetryState> {
   }
 
   void _onUpdated(_TelemetryUpdated event, Emitter<TelemetryState> emit) {
+    // Broadcast location to fleet
+    _fleetTrackingService.broadcastLocation(event.data);
+
     if (state is TelemetryActive) {
       emit((state as TelemetryActive).copyWith(data: event.data));
     } else {
