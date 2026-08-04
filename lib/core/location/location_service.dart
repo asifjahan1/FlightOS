@@ -116,31 +116,34 @@ class GeolocatorLocationService implements LocationService {
 
   @override
   Stream<TelemetryData> getPositionStream() async* {
-    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      _useSimulator = true;
-    }
-
-    var permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
+    if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
+      _useSimulator =
+          true; // Desktop environments often lack reliable GPS and can crash CoreLocation
+    } else {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
         _useSimulator = true;
       }
-    }
 
-    if (!_useSimulator) {
-      try {
-        // Test if the device can actually acquire a location (often fails on macOS desktop)
-        await Geolocator.getCurrentPosition(
-          locationSettings: const LocationSettings(
-            timeLimit: Duration(seconds: 5),
-          ),
-        );
-      } catch (e) {
-        // If it fails or times out, fallback to simulator
-        _useSimulator = true;
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied ||
+            permission == LocationPermission.deniedForever) {
+          _useSimulator = true;
+        }
+      }
+
+      if (!_useSimulator) {
+        try {
+          await Geolocator.getCurrentPosition(
+            locationSettings: const LocationSettings(
+              timeLimit: Duration(seconds: 5),
+            ),
+          );
+        } catch (e) {
+          _useSimulator = true;
+        }
       }
     }
 

@@ -363,13 +363,7 @@ class _MapReadyView extends StatelessWidget {
 
                     // ── Weather Radar Overlay ──
                     if (state.visibleLayers.contains(MapLayerType.weather))
-                      Opacity(
-                        opacity: 0.6,
-                        child: TileLayer(
-                          urlTemplate: 'https://tilecache.rainviewer.com/v2/radar/1691234567/256/{z}/{x}/{y}/2/1_1.png',
-                          tileProvider: NetworkTileProvider(),
-                        ),
-                      ),
+                      const SizedBox.shrink(), // Temporarily disabled: RainViewer tile cache returns 429/404 and crashes the app
 
                     // ── Airspace Polygons ──
                     if (airspaceState is AirspaceLoaded)
