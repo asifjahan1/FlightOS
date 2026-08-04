@@ -1,7 +1,3 @@
-/// SkyNav application entry point.
-///
-/// Initializes dependencies, configures the window for kiosk mode,
-/// and launches the Flutter application.
 library;
 
 import 'dart:io';
@@ -26,7 +22,6 @@ Future<void> main() async {
     minimumSize: const Size(1024, 768),
     center: true,
     backgroundColor: const Color(0xFF0D1117),
-    // Hidden title bar crashes on Linux — use normal there.
     titleBarStyle: Platform.isLinux
         ? TitleBarStyle.normal
         : TitleBarStyle.hidden,
@@ -38,17 +33,11 @@ Future<void> main() async {
     await windowManager.focus();
   });
 
-  // Initialize dependency injection
   await configureDependencies();
 
-  // Launch the UI IMMEDIATELY — never block the main isolate before runApp().
   runApp(const SkyNavApp());
 
-  // After the first frame is painted, do the heavy lifting:
-  // maximize the window and seed the database.
   WidgetsBinding.instance.addPostFrameCallback((_) async {
-    // Give the OpenGL/EGL surface time to initialize on Linux
-    // before changing the window geometry.
     await Future<void>.delayed(const Duration(milliseconds: 500));
     try {
       await windowManager.maximize();
