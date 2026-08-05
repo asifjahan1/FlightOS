@@ -142,10 +142,7 @@ class _MapPageState extends State<MapPage> {
                         final mapState = context.read<MapBloc>().state;
                         if (mapState is MapReady) {
                           _flutterMapController.move(
-                            LatLng(
-                              state.data.latitude,
-                              state.data.longitude,
-                            ),
+                            LatLng(state.data.latitude, state.data.longitude),
                             mapState.zoom,
                           );
                         }
@@ -255,10 +252,7 @@ class _MapErrorView extends StatelessWidget {
 
 /// Ready state — displays the map with overlays.
 class _MapReadyView extends StatelessWidget {
-  const _MapReadyView({
-    required this.state,
-    required this.mapController,
-  });
+  const _MapReadyView({required this.state, required this.mapController});
 
   final MapReady state;
   final MapController mapController;
@@ -320,7 +314,8 @@ class _MapReadyView extends StatelessWidget {
                   children: [
                     // ── Base Tile Layer ──
                     TileLayer(
-                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      urlTemplate:
+                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                       userAgentPackageName: 'com.skynav.skynav',
                       tileProvider: NetworkTileProvider(),
                       maxZoom: MapConstants.maxZoom,
@@ -333,7 +328,8 @@ class _MapReadyView extends StatelessWidget {
                         opacity: 0.7,
                         child: TileLayer(
                           // Chartbundle is permanently down. Using OpenTopoMap as a temporary fallback.
-                          urlTemplate: 'https://tile.opentopomap.org/{z}/{x}/{y}.png',
+                          urlTemplate:
+                              'https://tile.opentopomap.org/{z}/{x}/{y}.png',
                           tileProvider: NetworkTileProvider(),
                           maxZoom: 12,
                         ),
@@ -345,7 +341,8 @@ class _MapReadyView extends StatelessWidget {
                         opacity: 0.7,
                         child: TileLayer(
                           // Chartbundle is permanently down. Using OpenTopoMap as a temporary fallback.
-                          urlTemplate: 'https://tile.opentopomap.org/{z}/{x}/{y}.png',
+                          urlTemplate:
+                              'https://tile.opentopomap.org/{z}/{x}/{y}.png',
                           tileProvider: NetworkTileProvider(),
                           maxZoom: 12,
                         ),
@@ -356,7 +353,8 @@ class _MapReadyView extends StatelessWidget {
                       Opacity(
                         opacity: 0.6,
                         child: TileLayer(
-                          urlTemplate: 'https://tile.opentopomap.org/{z}/{x}/{y}.png',
+                          urlTemplate:
+                              'https://tile.opentopomap.org/{z}/{x}/{y}.png',
                           tileProvider: NetworkTileProvider(),
                           maxZoom: 17,
                         ),
@@ -365,7 +363,6 @@ class _MapReadyView extends StatelessWidget {
                     // ── Weather Radar Overlay ──
                     if (state.visibleLayers.contains(MapLayerType.weather))
                       const SizedBox.shrink(), // Temporarily disabled: RainViewer tile cache returns 429/404 and crashes the app
-
                     // ── Airspace Polygons ──
                     if (airspaceState is AirspaceLoaded)
                       PolygonLayer(
@@ -460,7 +457,8 @@ class _MapReadyView extends StatelessWidget {
                                 width: 48,
                                 height: 48,
                                 child: Transform.rotate(
-                                  angle: telemetryState.data.trueTrack *
+                                  angle:
+                                      telemetryState.data.trueTrack *
                                       math.pi /
                                       180.0,
                                   child: const Icon(
@@ -498,7 +496,8 @@ class _MapReadyView extends StatelessWidget {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Transform.rotate(
-                                        angle: target.trackDegrees *
+                                        angle:
+                                            target.trackDegrees *
                                             math.pi /
                                             180.0,
                                         child: const Icon(
@@ -570,10 +569,7 @@ class _MapReadyView extends StatelessWidget {
                     MapConstants.minZoom,
                     MapConstants.maxZoom,
                   );
-                  mapController.move(
-                    mapController.camera.center,
-                    newZoom,
-                  );
+                  mapController.move(mapController.camera.center, newZoom);
                   context.read<MapBloc>().add(MapZoomChanged(zoom: newZoom));
                 },
                 onZoomOut: () {
@@ -581,10 +577,7 @@ class _MapReadyView extends StatelessWidget {
                     MapConstants.minZoom,
                     MapConstants.maxZoom,
                   );
-                  mapController.move(
-                    mapController.camera.center,
-                    newZoom,
-                  );
+                  mapController.move(mapController.camera.center, newZoom);
                   context.read<MapBloc>().add(MapZoomChanged(zoom: newZoom));
                 },
                 onLayerToggle: (layer) {

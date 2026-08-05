@@ -145,8 +145,10 @@ class OpenSkyTrafficService implements TrafficService {
     final center = _latestLocation;
     if (center == null) return;
 
-    // Bounding box to fetch a MASSIVE amount of traffic (matching the OpenSky website screenshot).
-    // Using +/- 5.0 degrees covers roughly a 700x700 mile area, bringing in hundreds of planes!
+    // Bounding box to fetch traffic.
+    // WARNING: OpenSky's free API strictly limits requests to 25 square degrees!
+    // Using +/- 5.0 degrees covers 100 sq degrees and WILL BE BLOCKED (400 Bad Request).
+    // We MUST use +/- 2.0 degrees (which is 16 sq degrees) or less to get data!
     final lamin = center.latitude - 5.0;
     final lamax = center.latitude + 5.0;
     final lomin = center.longitude - 5.0;
