@@ -9,15 +9,9 @@ class FleetTarget extends Equatable {
     required this.heading,
     required this.speed,
     required this.updatedAt,
+    this.destinationLatitude,
+    this.destinationLongitude,
   });
-
-  final String id;
-  final double latitude;
-  final double longitude;
-  final double altitude;
-  final double heading;
-  final double speed;
-  final DateTime updatedAt;
 
   factory FleetTarget.fromJson(Map<String, dynamic> json) {
     return FleetTarget(
@@ -28,9 +22,31 @@ class FleetTarget extends Equatable {
       heading: (json['heading'] as num).toDouble(),
       speed: (json['speed'] as num).toDouble(),
       updatedAt: DateTime.parse(json['updated_at'] as String).toLocal(),
+      destinationLatitude: json['dest_lat'] != null ? (json['dest_lat'] as num).toDouble() : null,
+      destinationLongitude: json['dest_lng'] != null ? (json['dest_lng'] as num).toDouble() : null,
     );
   }
 
+  final String id;
+  final double latitude;
+  final double longitude;
+  final double altitude;
+  final double heading;
+  final double speed;
+  final DateTime updatedAt;
+  final double? destinationLatitude;
+  final double? destinationLongitude;
+
   @override
-  List<Object?> get props => [id, latitude, longitude, altitude, heading, speed, updatedAt];
+  List<Object?> get props => [
+        id,
+        latitude,
+        longitude,
+        altitude,
+        heading,
+        speed,
+        updatedAt,
+        destinationLatitude,
+        destinationLongitude,
+      ];
 }

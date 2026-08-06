@@ -2,10 +2,10 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:skynav/core/location/location_service.dart';
-import 'package:skynav/features/telemetry/domain/entities/telemetry_data.dart';
-
 import 'package:skynav/features/telemetry/data/services/fleet_tracking_service.dart';
+import 'package:skynav/features/telemetry/domain/entities/telemetry_data.dart';
 
 // ── Events ──
 sealed class TelemetryEvent extends Equatable {
@@ -29,6 +29,18 @@ class _TelemetryUpdated extends TelemetryEvent {
 
 class TelemetryFollowToggled extends TelemetryEvent {
   const TelemetryFollowToggled();
+}
+
+class TelemetryDestinationSet extends TelemetryEvent {
+  const TelemetryDestinationSet(this.destination);
+  final LatLng destination;
+
+  @override
+  List<Object?> get props => [destination];
+}
+
+class TelemetryDestinationCleared extends TelemetryEvent {
+  const TelemetryDestinationCleared();
 }
 
 // ── States ──
@@ -73,6 +85,8 @@ class TelemetryBloc extends Bloc<TelemetryEvent, TelemetryState> {
     on<TelemetryStarted>(_onStarted);
     on<_TelemetryUpdated>(_onUpdated);
     on<TelemetryFollowToggled>(_onFollowToggled);
+    on<TelemetryDestinationSet>(_onDestinationSet);
+    on<TelemetryDestinationCleared>(_onDestinationCleared);
   }
 
   final LocationService _locationService;
@@ -87,20 +101,51 @@ class TelemetryBloc extends Bloc<TelemetryEvent, TelemetryState> {
   }
 
   void _onUpdated(_TelemetryUpdated event, Emitter<TelemetryState> emit) {
-    // Broadcast location to fleet
-    _fleetTrackingService.broadcastLocation(event.data);
-
+    var newData = event.data;
+    
+    // Preserve destination if it exists in the current active state
     if (state is TelemetryActive) {
-      emit((state as TelemetryActive).copyWith(data: event.data));
+      final activeState = state as TelemetryActive;
+      if (activeState.data.destinationLatitude != null && activeState.data.destinationLongitude != null) {
+        newData = newData.copyWith(
+          destinationLatitude: activeState.data.destinationLatitude,
+          destinationLongitude: activeState.data.destinationLongitude,
+        );
+      }
+      emit(activeState.copyWith(data: newData));
     } else {
-      emit(TelemetryActive(data: event.data));
+      emit(TelemetryActive(data: newData));
     }
+
+    // Broadcast location (with destination if any) to fleet
+    _fleetTrackingService.broadcastLocation(newData);
   }
 
   void _onFollowToggled(TelemetryFollowToggled event, Emitter<TelemetryState> emit) {
     if (state is TelemetryActive) {
       final active = state as TelemetryActive;
       emit(active.copyWith(followModeEnabled: !active.followModeEnabled));
+    }
+  }
+
+  void _onDestinationSet(TelemetryDestinationSet event, Emitter<TelemetryState> emit) {
+    if (state is TelemetryActive) {
+      final active = state as TelemetryActive;
+      final newData = active.data.copyWith(
+        destinationLatitude: event.destination.latitude,
+        destinationLongitude: event.destination.longitude,
+      );
+      emit(active.copyWith(data: newData));
+      _fleetTrackingService.broadcastLocation(newData);
+    }
+  }
+
+  void _onDestinationCleared(TelemetryDestinationCleared event, Emitter<TelemetryState> emit) {
+    if (state is TelemetryActive) {
+      final active = state as TelemetryActive;
+      final newData = active.data.copyWith(clearDestination: true);
+      emit(active.copyWith(data: newData));
+      _fleetTrackingService.broadcastLocation(newData);
     }
   }
 

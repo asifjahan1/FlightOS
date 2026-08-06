@@ -104,6 +104,7 @@ class OpenSkyTrafficService implements TrafficService {
 
   final LocationService _locationService;
   Timer? _pollingTimer;
+  Timer? _animationTimer;
   StreamSubscription<TelemetryData>? _locationSub;
   TelemetryData? _latestLocation;
   List<TrafficTarget> _targets = [];
@@ -116,24 +117,46 @@ class OpenSkyTrafficService implements TrafficService {
       _latestLocation = data;
     });
 
+    // Fast timer to smoothly animate planes between network updates (Dead Reckoning)
+    _animationTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_targets.isEmpty) return;
+      
+      final updated = <TrafficTarget>[];
+      for (final target in _targets) {
+        final distMeters = (target.groundSpeedKnots / 1.94384) * 1.0; 
+        final latOffset = (distMeters * math.cos(target.trackDegrees * math.pi / 180)) / 111320.0;
+        final lonOffset = (distMeters * math.sin(target.trackDegrees * math.pi / 180)) /
+            (111320.0 * math.cos(target.latitude * math.pi / 180));
+
+        updated.add(
+          target.copyWith(
+            latitude: target.latitude + latOffset,
+            longitude: target.longitude + lonOffset,
+          ),
+        );
+      }
+      _targets = updated;
+      controller.add(List.unmodifiable(_targets));
+    });
+
     // OpenSky data refreshes roughly every 10 seconds.
     _pollingTimer = Timer.periodic(const Duration(seconds: 10), (timer) async {
       if (_latestLocation == null) return;
 
       await _fetchTraffic();
-      controller.add(List.unmodifiable(_targets));
+      // Don't add to controller here, let animationTimer handle it to prevent jitter
     });
 
     // Initial fetch
     Future.delayed(const Duration(seconds: 2), () async {
       if (_latestLocation != null) {
         await _fetchTraffic();
-        controller.add(List.unmodifiable(_targets));
       }
     });
 
     controller.onCancel = () {
       _pollingTimer?.cancel();
+      _animationTimer?.cancel();
       _locationSub?.cancel();
       controller.close();
     };
@@ -147,12 +170,11 @@ class OpenSkyTrafficService implements TrafficService {
 
     // Bounding box to fetch traffic.
     // WARNING: OpenSky's free API strictly limits requests to 25 square degrees!
-    // Using +/- 5.0 degrees covers 100 sq degrees and WILL BE BLOCKED (400 Bad Request).
-    // We MUST use +/- 2.0 degrees (which is 16 sq degrees) or less to get data!
-    final lamin = center.latitude - 5.0;
-    final lamax = center.latitude + 5.0;
-    final lomin = center.longitude - 5.0;
-    final lomax = center.longitude + 5.0;
+    // Using +/- 1.5 degrees covers 9 sq degrees which is safe.
+    final lamin = center.latitude - 1.5;
+    final lamax = center.latitude + 1.5;
+    final lomin = center.longitude - 1.5;
+    final lomax = center.longitude + 1.5;
 
     final url = Uri.parse(
       'https://opensky-network.org/api/states/all?lamin=$lamin&lomin=$lomin&lamax=$lamax&lomax=$lomax',

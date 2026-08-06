@@ -241,14 +241,23 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     if (currentState is MapReady) {
       List<Airport>? newAirports;
 
-      // Only fetch airports if zoomed in enough to prevent clutter/perf issues.
-      if (event.zoom > 6.0 && currentState.visibleLayers.contains(MapLayerType.airports)) {
+      final isAirportsOn = currentState.visibleLayers.contains(MapLayerType.airports);
+      final isWeatherOn = currentState.visibleLayers.contains(MapLayerType.weather);
+
+      if (isAirportsOn || isWeatherOn) {
         try {
+          List<String>? typesFilter;
+          if (event.zoom <= 6.0) {
+            // When zoomed far out, only show major airports to prevent clutter and API limits.
+            typesFilter = ['large_airport'];
+          }
+          
           newAirports = await _airportRepository.getAirportsInBoundingBox(
             minLat: event.bounds.southWest.latitude,
             maxLat: event.bounds.northEast.latitude,
             minLon: event.bounds.southWest.longitude,
             maxLon: event.bounds.northEast.longitude,
+            types: typesFilter,
           );
         } catch (_) {
           // Ignore fetch errors for now

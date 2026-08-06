@@ -116,15 +116,10 @@ class GeolocatorLocationService implements LocationService {
 
   @override
   Stream<TelemetryData> getPositionStream() async* {
-    if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
-      _useSimulator =
-          true; // Desktop environments often lack reliable GPS and can crash CoreLocation
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      _useSimulator = true;
     } else {
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        _useSimulator = true;
-      }
-
       var permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
@@ -192,9 +187,7 @@ class GeolocatorLocationService implements LocationService {
       timeoutTimer?.cancel();
       fallbackTimer?.cancel();
       // If no GPS update for 5 seconds, start dead reckoning
-      timeoutTimer = Timer(const Duration(seconds: 5), () {
-        startDeadReckoning();
-      });
+      timeoutTimer = Timer(const Duration(seconds: 5), startDeadReckoning);
     }
 
     controller.onListen = () {

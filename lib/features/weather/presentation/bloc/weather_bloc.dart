@@ -24,10 +24,12 @@ class WeatherBloc extends Bloc<WeatherEvent, WeatherState> {
       radarVisible = currentState.isRadarVisible;
     }
 
-    for (final id in event.airportIds) {
-      if (!currentReports.containsKey(id)) {
-        final report = await _service.getWeatherForAirport(id);
-        currentReports[id] = report;
+    final newIds = event.airportIds.where((id) => !currentReports.containsKey(id)).toList();
+    
+    if (newIds.isNotEmpty) {
+      final newReports = await _service.getWeatherForAirports(newIds);
+      for (final report in newReports) {
+        currentReports[report.airportId] = report;
       }
     }
 

@@ -25,12 +25,14 @@ class AirportRepositoryImpl implements AirportRepository {
     required double maxLat,
     required double minLon,
     required double maxLon,
+    List<String>? types,
   }) async {
     final list = await _dao.getAirportsInBoundingBox(
       minLat: minLat,
       maxLat: maxLat,
       minLon: minLon,
       maxLon: maxLon,
+      types: types,
     );
     return list.map(_mapAirport).toList();
   }
@@ -45,6 +47,12 @@ class AirportRepositoryImpl implements AirportRepository {
   Future<List<Frequency>> getFrequencies(String airportIcao) async {
     final list = await _dao.getFrequenciesForAirport(airportIcao);
     return list.map(_mapFrequency).toList();
+  }
+
+  @override
+  Future<List<Airport>> searchAirports(String query) async {
+    final list = await _dao.searchAirports(query);
+    return list.map(_mapAirport).toList();
   }
 
   // --- Mappers ---
