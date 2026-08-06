@@ -6,6 +6,7 @@ import 'package:injectable/injectable.dart';
 import 'package:skynav/core/location/location_service.dart';
 import 'package:skynav/features/telemetry/domain/entities/telemetry_data.dart';
 import 'package:skynav/features/traffic/domain/entities/traffic_target.dart';
+import 'package:skynav/core/constants/api_constants.dart';
 
 abstract class TrafficService {
   /// Stream of all active traffic targets around the aircraft.
@@ -177,7 +178,7 @@ class OpenSkyTrafficService implements TrafficService {
     final lomax = center.longitude + 1.5;
 
     final url = Uri.parse(
-      'https://opensky-network.org/api/states/all?lamin=$lamin&lomin=$lomin&lamax=$lamax&lomax=$lomax',
+      '${ApiConstants.openSkyApiEndpoint}/states/all?lamin=$lamin&lomin=$lomin&lamax=$lamax&lomax=$lomax',
     );
 
     try {

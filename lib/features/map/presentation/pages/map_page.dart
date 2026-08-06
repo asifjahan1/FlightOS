@@ -22,6 +22,7 @@ import 'package:skynav/features/flight_plan/domain/entities/waypoint.dart';
 import 'package:skynav/features/flight_plan/presentation/bloc/flight_plan_bloc.dart';
 import 'package:skynav/features/map/presentation/bloc/map_bloc.dart';
 import 'package:skynav/features/map/presentation/widgets/airport_search_bar.dart';
+import 'package:skynav/features/traffic/presentation/widgets/aircraft_details_sheet.dart' as skynav_details;
 import 'package:skynav/features/map/presentation/widgets/map_controls.dart';
 import 'package:skynav/features/map/presentation/widgets/map_info_bar.dart';
 import 'package:skynav/features/scratchpad/presentation/widgets/scratchpad_panel.dart';
@@ -744,9 +745,16 @@ class _MapReadyView extends StatelessWidget {
                                   ),
                                   width: 64,
                                   height: 48,
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      showModalBottomSheet(
+                                        context: context,
+                                        builder: (ctx) => skynav_details.AircraftDetailsSheet(target: target),
+                                      );
+                                    },
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
                                       Transform.rotate(
                                         angle:
                                             target.trackDegrees *
@@ -784,6 +792,7 @@ class _MapReadyView extends StatelessWidget {
                                       ),
                                     ],
                                   ),
+                                ),
                                 );
                               }).toList(),
                             );

@@ -6,6 +6,7 @@ import 'package:skynav/features/airport/domain/entities/airport.dart';
 import 'package:skynav/features/airport/domain/repositories/airport_repository.dart';
 import 'package:skynav/features/telemetry/presentation/bloc/telemetry_bloc.dart';
 import 'package:skynav/injection.dart';
+import 'package:skynav/features/airport/presentation/widgets/airport_details_panel.dart' as skynav_panels;
 
 class AirportSearchBar extends StatefulWidget {
   const AirportSearchBar({super.key});
@@ -33,14 +34,26 @@ class _AirportSearchBarState extends State<AirportSearchBar> {
             },
             displayStringForOption: (Airport option) => '${option.icao} - ${option.name}',
             onSelected: (Airport selection) {
-              // Set the destination when an airport is selected
+              // Hide keyboard
+              FocusScope.of(context).unfocus();
+              
+              // Set the destination (optional, can leave this here or let user click 'Direct To' in details)
               context.read<TelemetryBloc>().add(
                 TelemetryDestinationSet(
                   LatLng(selection.latitude, selection.longitude),
                 ),
               );
-              // Hide keyboard
-              FocusScope.of(context).unfocus();
+              
+              // Show the rich details panel
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (ctx) => FractionallySizedBox(
+                  heightFactor: 0.85,
+                  child: skynav_panels.AirportDetailsPanel(airport: selection),
+                ),
+              );
             },
             fieldViewBuilder: (
               BuildContext context,
