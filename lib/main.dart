@@ -4,18 +4,19 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:skynav/app.dart';
 import 'package:skynav/core/database/connection.dart';
 import 'package:skynav/features/airport/data/seed/airport_seeder.dart';
 import 'package:skynav/injection.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:window_manager/window_manager.dart';
- 
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: ".env");
+
+  // ignore: prefer_single_quotes, avoid_redundant_argument_values
+  await dotenv.load(fileName: '.env');
 
   // Enforce landscape mode for mobile devices
   await SystemChrome.setPreferredOrientations([
