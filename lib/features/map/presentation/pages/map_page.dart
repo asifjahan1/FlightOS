@@ -296,6 +296,22 @@ class _MapReadyViewState extends State<_MapReadyView> {
                     minZoom: MapConstants.minZoom,
                     maxZoom: MapConstants.maxZoom,
                     backgroundColor: const Color(0xFF0D1117),
+                    onMapReady: () {
+                      final camera = widget.mapController.camera;
+                      final bounds = camera.visibleBounds;
+                      if (context.mounted) {
+                        context.read<MapBloc>().add(
+                          MapMoved(
+                            center: camera.center,
+                            zoom: camera.zoom,
+                            bounds: MapBounds(
+                              southWest: bounds.southWest,
+                              northEast: bounds.northEast,
+                            ),
+                          ),
+                        );
+                      }
+                    },
                     onMapEvent: (event) {
                       if (event is MapEventMoveEnd) {
                         final camera = widget.mapController.camera;
@@ -929,6 +945,7 @@ class _MapReadyViewState extends State<_MapReadyView> {
         Positioned(
           top: 16,
           right: 16,
+          bottom: 100, // Constrain height to allow scrolling on mobile
           child: BlocBuilder<TelemetryBloc, TelemetryState>(
             builder: (context, telemetryState) {
               final isFollowing =
