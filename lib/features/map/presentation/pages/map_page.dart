@@ -23,7 +23,8 @@ import 'package:skynav/features/flight_plan/domain/entities/waypoint.dart';
 import 'package:skynav/features/flight_plan/presentation/bloc/flight_plan_bloc.dart';
 import 'package:skynav/features/map/presentation/bloc/map_bloc.dart';
 import 'package:skynav/features/map/presentation/widgets/airport_search_bar.dart';
-import 'package:skynav/features/traffic/presentation/widgets/aircraft_details_sheet.dart' as skynav_details;
+import 'package:skynav/features/traffic/presentation/widgets/aircraft_details_sheet.dart'
+    as skynav_details;
 import 'package:skynav/features/map/presentation/widgets/map_controls.dart';
 import 'package:skynav/features/map/presentation/widgets/map_info_bar.dart';
 import 'package:skynav/features/scratchpad/presentation/widgets/scratchpad_panel.dart';
@@ -344,7 +345,9 @@ class _MapReadyViewState extends State<_MapReadyView> {
                     ),
 
                     // ── VFR Chart Overlay ──
-                    if (widget.state.visibleLayers.contains(MapLayerType.vfrChart))
+                    if (widget.state.visibleLayers.contains(
+                      MapLayerType.vfrChart,
+                    ))
                       Opacity(
                         opacity: 0.7,
                         child: TileLayer(
@@ -357,7 +360,9 @@ class _MapReadyViewState extends State<_MapReadyView> {
                       ),
 
                     // ── IFR Chart Overlay ──
-                    if (widget.state.visibleLayers.contains(MapLayerType.ifrChart))
+                    if (widget.state.visibleLayers.contains(
+                      MapLayerType.ifrChart,
+                    ))
                       Opacity(
                         opacity: 0.7,
                         child: TileLayer(
@@ -370,7 +375,9 @@ class _MapReadyViewState extends State<_MapReadyView> {
                       ),
 
                     // ── Terrain Overlay ──
-                    if (widget.state.visibleLayers.contains(MapLayerType.terrain))
+                    if (widget.state.visibleLayers.contains(
+                      MapLayerType.terrain,
+                    ))
                       Opacity(
                         opacity: 0.6,
                         child: TileLayer(
@@ -382,7 +389,9 @@ class _MapReadyViewState extends State<_MapReadyView> {
                       ),
 
                     // ── Weather Radar Overlay ──
-                    if (widget.state.visibleLayers.contains(MapLayerType.weather))
+                    if (widget.state.visibleLayers.contains(
+                      MapLayerType.weather,
+                    ))
                       const SizedBox.shrink(), // Temporarily disabled: RainViewer tile cache returns 429/404 and crashes the app
                     // ── Airspace Polygons ──
                     if (airspaceState is AirspaceLoaded)
@@ -448,7 +457,9 @@ class _MapReadyViewState extends State<_MapReadyView> {
                       ),
 
                     // ── Airport Markers ──
-                    if (widget.state.visibleLayers.contains(MapLayerType.airports))
+                    if (widget.state.visibleLayers.contains(
+                      MapLayerType.airports,
+                    ))
                       MarkerLayer(
                         markers: widget.state.airports.map((airport) {
                           return Marker(
@@ -528,7 +539,7 @@ class _MapReadyViewState extends State<_MapReadyView> {
                                   ),
                                 ),
                                 child: const Icon(
-                                  Icons.location_on,
+                                  Icons.flight,
                                   color: AppTheme.accentPrimary,
                                   size: 16,
                                 ),
@@ -539,7 +550,9 @@ class _MapReadyViewState extends State<_MapReadyView> {
                       ),
 
                     // ── Weather Markers (VFR/IFR Conditions) ──
-                    if (widget.state.visibleLayers.contains(MapLayerType.weather))
+                    if (widget.state.visibleLayers.contains(
+                      MapLayerType.weather,
+                    ))
                       BlocBuilder<WeatherBloc, WeatherState>(
                         builder: (context, weatherState) {
                           if (weatherState is WeatherLoaded) {
@@ -668,7 +681,6 @@ class _MapReadyViewState extends State<_MapReadyView> {
                         if (telemetryState is TelemetryActive &&
                             telemetryState.data.destinationLatitude != null &&
                             telemetryState.data.destinationLongitude != null) {
-                          
                           final p1 = LatLng(
                             telemetryState.data.latitude,
                             telemetryState.data.longitude,
@@ -677,11 +689,11 @@ class _MapReadyViewState extends State<_MapReadyView> {
                             telemetryState.data.destinationLatitude!,
                             telemetryState.data.destinationLongitude!,
                           );
-                          
+
                           // Calculate midpoint
                           final midLat = (p1.latitude + p2.latitude) / 2;
                           final midLon = (p1.longitude + p2.longitude) / 2;
-                          
+
                           // Calculate distance and ETE
                           final distanceKm = NavMath.distanceKm(
                             p1.latitude,
@@ -720,17 +732,26 @@ class _MapReadyViewState extends State<_MapReadyView> {
                                     height: 52,
                                     alignment: Alignment.center,
                                     child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFF1E1E24).withValues(alpha: 0.85),
+                                        color: const Color(
+                                          0xFF1E1E24,
+                                        ).withValues(alpha: 0.85),
                                         borderRadius: BorderRadius.circular(10),
                                         border: Border.all(
-                                          color: Colors.blueAccent.withValues(alpha: 0.7),
+                                          color: Colors.blueAccent.withValues(
+                                            alpha: 0.7,
+                                          ),
                                           width: 1.5,
                                         ),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: Colors.black.withValues(alpha: 0.3),
+                                            color: Colors.black.withValues(
+                                              alpha: 0.3,
+                                            ),
                                             blurRadius: 6,
                                             offset: const Offset(0, 3),
                                           ),
@@ -738,7 +759,8 @@ class _MapReadyViewState extends State<_MapReadyView> {
                                       ),
                                       child: Column(
                                         mainAxisSize: MainAxisSize.min,
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
                                           Text(
                                             '${distanceKm.toStringAsFixed(1)} KM',
@@ -795,8 +817,10 @@ class _MapReadyViewState extends State<_MapReadyView> {
                                   ),
                                 ),
                               ),
-                              if (telemetryState.data.destinationLatitude != null &&
-                                  telemetryState.data.destinationLongitude != null)
+                              if (telemetryState.data.destinationLatitude !=
+                                      null &&
+                                  telemetryState.data.destinationLongitude !=
+                                      null)
                                 Marker(
                                   point: LatLng(
                                     telemetryState.data.destinationLatitude!,
@@ -821,7 +845,9 @@ class _MapReadyViewState extends State<_MapReadyView> {
                     const FleetLayer(),
 
                     // ── Traffic Markers ──
-                    if (widget.state.visibleLayers.contains(MapLayerType.traffic))
+                    if (widget.state.visibleLayers.contains(
+                      MapLayerType.traffic,
+                    ))
                       BlocBuilder<TrafficBloc, TrafficState>(
                         builder: (context, trafficState) {
                           if (trafficState is TrafficActive) {
@@ -838,50 +864,53 @@ class _MapReadyViewState extends State<_MapReadyView> {
                                     onTap: () {
                                       showModalBottomSheet(
                                         context: context,
-                                        builder: (ctx) => skynav_details.AircraftDetailsSheet(target: target),
+                                        builder: (ctx) =>
+                                            skynav_details.AircraftDetailsSheet(
+                                              target: target,
+                                            ),
                                       );
                                     },
                                     child: Column(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                      Transform.rotate(
-                                        angle:
-                                            target.trackDegrees *
-                                            math.pi /
-                                            180.0,
-                                        child: const Icon(
-                                          Icons.flight,
-                                          color: Colors.cyanAccent,
-                                          size: 20,
-                                        ),
-                                      ),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 4,
-                                          vertical: 2,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: Colors.black.withValues(
-                                            alpha: 0.6,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            4,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          '${target.callsign ?? target.icaoHex}\n${(target.altitudeFeet / 100).round().toString().padLeft(3, '0')}',
-                                          style: const TextStyle(
+                                        Transform.rotate(
+                                          angle:
+                                              target.trackDegrees *
+                                              math.pi /
+                                              180.0,
+                                          child: const Icon(
+                                            Icons.flight,
                                             color: Colors.cyanAccent,
-                                            fontSize: 10,
-                                            height: 1.1,
-                                            fontWeight: FontWeight.bold,
+                                            size: 20,
                                           ),
-                                          textAlign: TextAlign.center,
                                         ),
-                                      ),
-                                    ],
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 4,
+                                            vertical: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black.withValues(
+                                              alpha: 0.6,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              4,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            '${target.callsign ?? target.icaoHex}\n${(target.altitudeFeet / 100).round().toString().padLeft(3, '0')}',
+                                            style: const TextStyle(
+                                              color: Colors.cyanAccent,
+                                              fontSize: 10,
+                                              height: 1.1,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
                                 );
                               }).toList(),
                             );
@@ -928,7 +957,10 @@ class _MapReadyViewState extends State<_MapReadyView> {
                     MapConstants.minZoom,
                     MapConstants.maxZoom,
                   );
-                  widget.mapController.move(widget.mapController.camera.center, newZoom);
+                  widget.mapController.move(
+                    widget.mapController.camera.center,
+                    newZoom,
+                  );
                   context.read<MapBloc>().add(MapZoomChanged(zoom: newZoom));
                 },
                 onZoomOut: () {
@@ -936,7 +968,10 @@ class _MapReadyViewState extends State<_MapReadyView> {
                     MapConstants.minZoom,
                     MapConstants.maxZoom,
                   );
-                  widget.mapController.move(widget.mapController.camera.center, newZoom);
+                  widget.mapController.move(
+                    widget.mapController.camera.center,
+                    newZoom,
+                  );
                   context.read<MapBloc>().add(MapZoomChanged(zoom: newZoom));
                 },
                 onLayerToggle: (layer) {

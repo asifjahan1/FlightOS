@@ -4,18 +4,19 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:skynav/app.dart';
 import 'package:skynav/core/database/connection.dart';
 import 'package:skynav/features/airport/data/seed/airport_seeder.dart';
 import 'package:skynav/injection.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:window_manager/window_manager.dart';
- 
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: ".env");
+
+  // ignore: prefer_single_quotes, avoid_redundant_argument_values
+  await dotenv.load(fileName: '.env');
 
   // Enforce landscape mode for mobile devices
   await SystemChrome.setPreferredOrientations([
@@ -26,8 +27,8 @@ Future<void> main() async {
   try {
     // Initialize Supabase
     await Supabase.initialize(
-      url: 'https://qpfglplzegtaglybqekx.supabase.co',
-      publishableKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFwZmdscGx6ZWd0YWdseWJxZWt4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4MzU5MTgsImV4cCI6MjEwMTQxMTkxOH0.yedTWK0BlOEt76b9dhTwt3qmT_7lh3mAVHAZT9k-rAE',
+      url: dotenv.env['SUPABASE_URL'] ?? '',
+      publishableKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
     );
 
     // Sign in anonymously if not already signed in (so we have an ID for tracking)
