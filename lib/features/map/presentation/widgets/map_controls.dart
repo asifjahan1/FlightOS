@@ -16,6 +16,9 @@ class MapControls extends StatelessWidget {
     required this.onLayerToggle,
     required this.isFollowing,
     required this.onFollowToggle,
+    required this.isDrawMode,
+    required this.onDrawModeToggle,
+    required this.onClearRoute,
     super.key,
   });
 
@@ -26,6 +29,9 @@ class MapControls extends StatelessWidget {
   final ValueChanged<MapLayerType> onLayerToggle;
   final bool isFollowing;
   final VoidCallback onFollowToggle;
+  final bool isDrawMode;
+  final VoidCallback onDrawModeToggle;
+  final VoidCallback onClearRoute;
 
   @override
   Widget build(BuildContext context) {
@@ -68,6 +74,26 @@ class MapControls extends StatelessWidget {
                 onPressed: () {
                   // Reset bearing to north (future)
                 },
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 8),
+
+          // ── Route Controls ──
+          _ControlPanel(
+            children: [
+              _LayerToggle(
+                icon: Icons.edit_location_alt,
+                label: 'Draw Route',
+                isActive: isDrawMode,
+                onTap: onDrawModeToggle,
+              ),
+              const _ControlDivider(),
+              _ControlButton(
+                icon: Icons.delete_outline,
+                tooltip: 'Clear Route',
+                onPressed: onClearRoute,
               ),
             ],
           ),
