@@ -70,8 +70,18 @@ Future<void> main() async {
 
   await configureDependencies();
 
+  // Seed airports BEFORE launching the app so the database is ready when the
+  // map initializes. On Android this avoids the race where onMapReady fires
+  // before seeding finishes.
+  try {
+    await sl<AirportSeeder>().seedDatabaseIfEmpty();
+  } catch (e, stack) {
+    debugPrint('WARNING: Database seeding failed: $e\n$stack');
+  }
+
   runApp(const SkyNavApp());
 
+  // Maximize window on desktop platforms (non-blocking, after runApp).
   WidgetsBinding.instance.addPostFrameCallback((_) async {
     await Future<void>.delayed(const Duration(milliseconds: 500));
     try {
@@ -80,11 +90,6 @@ Future<void> main() async {
       }
     } catch (e) {
       debugPrint('WARNING: Could not maximize window: $e');
-    }
-    try {
-      await sl<AirportSeeder>().seedDatabaseIfEmpty();
-    } catch (e, stack) {
-      debugPrint('WARNING: Database seeding failed: $e\n$stack');
     }
   });
 }
