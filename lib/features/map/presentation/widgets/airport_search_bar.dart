@@ -161,7 +161,7 @@ class _AirportSearchBarState extends State<AirportSearchBar> {
                   padding: EdgeInsets.zero,
                   shrinkWrap: true,
                   itemCount: _results.length,
-                  separatorBuilder: (_, __) =>
+                  separatorBuilder: (_, _) =>
                       const Divider(height: 1, color: AppTheme.border),
                   itemBuilder: (context, index) {
                     final airport = _results[index];
