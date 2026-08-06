@@ -7,7 +7,6 @@ import 'package:skynav/core/database/database.dart';
 
 @lazySingleton
 class AirportSeeder {
-
   AirportSeeder(this._db);
   final AppDatabase _db;
   final _logger = Logger();
@@ -21,8 +20,11 @@ class AirportSeeder {
 
     _logger.i('Seeding airports from assets/data/airports_seed.json...');
     try {
-      final jsonString = await rootBundle.loadString('assets/data/airports_seed.json');
+      final jsonString = await rootBundle.loadString(
+        'assets/data/airports_seed.json',
+      );
       final List<dynamic> jsonList = jsonDecode(jsonString);
+      _logger.i('Seeding ${jsonList.length} airports...');
 
       final airports = jsonList.map((dynamic item) {
         final json = item as Map<String, dynamic>;
@@ -34,6 +36,8 @@ class AirportSeeder {
           longitude: (json['longitude'] as num).toDouble(),
           elevation: (json['elevation'] as num).toDouble(),
           type: json['type'] as String,
+          municipality: Value(json['municipality'] as String?),
+          countryCode: json['countryCode'] as String? ?? 'US',
         );
       }).toList();
 

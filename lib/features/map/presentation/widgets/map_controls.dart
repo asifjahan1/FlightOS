@@ -16,6 +16,9 @@ class MapControls extends StatelessWidget {
     required this.onLayerToggle,
     required this.isFollowing,
     required this.onFollowToggle,
+    required this.isDrawMode,
+    required this.onDrawModeToggle,
+    required this.onClearRoute,
     super.key,
   });
 
@@ -26,100 +29,125 @@ class MapControls extends StatelessWidget {
   final ValueChanged<MapLayerType> onLayerToggle;
   final bool isFollowing;
   final VoidCallback onFollowToggle;
+  final bool isDrawMode;
+  final VoidCallback onDrawModeToggle;
+  final VoidCallback onClearRoute;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // ── Zoom Controls ──
-        _ControlPanel(
-          children: [
-            _ControlButton(
-              icon: Icons.add,
-              tooltip: 'Zoom In',
-              onPressed: onZoomIn,
-            ),
-            const _ControlDivider(),
-            _ControlButton(
-              icon: Icons.remove,
-              tooltip: 'Zoom Out',
-              onPressed: onZoomOut,
-            ),
-          ],
-        ),
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ── Zoom Controls ──
+          _ControlPanel(
+            children: [
+              _ControlButton(
+                icon: Icons.add,
+                tooltip: 'Zoom In',
+                onPressed: onZoomIn,
+              ),
+              const _ControlDivider(),
+              _ControlButton(
+                icon: Icons.remove,
+                tooltip: 'Zoom Out',
+                onPressed: onZoomOut,
+              ),
+            ],
+          ),
 
-        const SizedBox(height: 8),
+          const SizedBox(height: 8),
 
-        // ── Compass & Follow ──
-        _ControlPanel(
-          children: [
-            _LayerToggle(
-              icon: Icons.my_location,
-              label: 'Follow Mode',
-              isActive: isFollowing,
-              onTap: onFollowToggle,
-            ),
-            const _ControlDivider(),
-            _ControlButton(
-              icon: Icons.navigation,
-              tooltip: 'North Up',
-              onPressed: () {
-                // Reset bearing to north (future)
-              },
-            ),
-          ],
-        ),
+          // ── Compass & Follow ──
+          _ControlPanel(
+            children: [
+              _LayerToggle(
+                icon: Icons.my_location,
+                label: 'Follow Mode',
+                isActive: isFollowing,
+                onTap: onFollowToggle,
+              ),
+              const _ControlDivider(),
+              _ControlButton(
+                icon: Icons.navigation,
+                tooltip: 'North Up',
+                onPressed: () {
+                  // Reset bearing to north (future)
+                },
+              ),
+            ],
+          ),
 
-        const SizedBox(height: 8),
+          const SizedBox(height: 8),
 
-        // ── Layer Toggle ──
-        _ControlPanel(
-          children: [
-            _LayerToggle(
-              icon: Icons.local_airport,
-              label: 'Airports',
-              isActive: visibleLayers.contains(MapLayerType.airports),
-              onTap: () => onLayerToggle(MapLayerType.airports),
-            ),
-            const _ControlDivider(),
-            _LayerToggle(
-              icon: Icons.map,
-              label: 'VFR Chart',
-              isActive: visibleLayers.contains(MapLayerType.vfrChart),
-              onTap: () => onLayerToggle(MapLayerType.vfrChart),
-            ),
-            const _ControlDivider(),
-            _LayerToggle(
-              icon: Icons.layers,
-              label: 'IFR Low',
-              isActive: visibleLayers.contains(MapLayerType.ifrChart),
-              onTap: () => onLayerToggle(MapLayerType.ifrChart),
-            ),
-            const _ControlDivider(),
-            _LayerToggle(
-              icon: Icons.terrain,
-              label: 'Terrain',
-              isActive: visibleLayers.contains(MapLayerType.terrain),
-              onTap: () => onLayerToggle(MapLayerType.terrain),
-            ),
-            const _ControlDivider(),
-            _LayerToggle(
-              icon: Icons.cloud,
-              label: 'Weather',
-              isActive: visibleLayers.contains(MapLayerType.weather),
-              onTap: () => onLayerToggle(MapLayerType.weather),
-            ),
-            const _ControlDivider(),
-            _LayerToggle(
-              icon: Icons.people,
-              label: 'Traffic',
-              isActive: visibleLayers.contains(MapLayerType.traffic),
-              onTap: () => onLayerToggle(MapLayerType.traffic),
-            ),
-          ],
-        ),
-      ],
+          // ── Route Controls ──
+          _ControlPanel(
+            children: [
+              _LayerToggle(
+                icon: Icons.edit_location_alt,
+                label: 'Draw Route',
+                isActive: isDrawMode,
+                onTap: onDrawModeToggle,
+              ),
+              const _ControlDivider(),
+              _ControlButton(
+                icon: Icons.delete_outline,
+                tooltip: 'Clear Route',
+                onPressed: onClearRoute,
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 8),
+
+          // ── Layer Toggle ──
+          _ControlPanel(
+            children: [
+              _LayerToggle(
+                icon: Icons.local_airport,
+                label: 'Airports',
+                isActive: visibleLayers.contains(MapLayerType.airports),
+                onTap: () => onLayerToggle(MapLayerType.airports),
+              ),
+              const _ControlDivider(),
+              _LayerToggle(
+                icon: Icons.map,
+                label: 'VFR Chart',
+                isActive: visibleLayers.contains(MapLayerType.vfrChart),
+                onTap: () => onLayerToggle(MapLayerType.vfrChart),
+              ),
+              const _ControlDivider(),
+              _LayerToggle(
+                icon: Icons.layers,
+                label: 'IFR Low',
+                isActive: visibleLayers.contains(MapLayerType.ifrChart),
+                onTap: () => onLayerToggle(MapLayerType.ifrChart),
+              ),
+              const _ControlDivider(),
+              _LayerToggle(
+                icon: Icons.terrain,
+                label: 'Terrain',
+                isActive: visibleLayers.contains(MapLayerType.terrain),
+                onTap: () => onLayerToggle(MapLayerType.terrain),
+              ),
+              const _ControlDivider(),
+              _LayerToggle(
+                icon: Icons.cloud,
+                label: 'Weather',
+                isActive: visibleLayers.contains(MapLayerType.weather),
+                onTap: () => onLayerToggle(MapLayerType.weather),
+              ),
+              const _ControlDivider(),
+              _LayerToggle(
+                icon: Icons.people,
+                label: 'Traffic',
+                isActive: visibleLayers.contains(MapLayerType.traffic),
+                onTap: () => onLayerToggle(MapLayerType.traffic),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -145,10 +173,7 @@ class _ControlPanel extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: children,
-      ),
+      child: Column(mainAxisSize: MainAxisSize.min, children: children),
     );
   }
 }
@@ -171,13 +196,13 @@ class _ControlButton extends StatelessWidget {
       message: tooltip,
       child: InkWell(
         onTap: onPressed,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(8),
         child: Padding(
-          padding: const EdgeInsets.all(10),
+          padding: const EdgeInsets.all(18), // Increased for tablet/cockpit
           child: Icon(
             icon,
             color: AppTheme.textPrimary,
-            size: 20,
+            size: 28, // Increased for tablet/cockpit
           ),
         ),
       ),
@@ -205,13 +230,13 @@ class _LayerToggle extends StatelessWidget {
       message: label,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(8),
         child: Padding(
-          padding: const EdgeInsets.all(10),
+          padding: const EdgeInsets.all(18), // Increased for tablet/cockpit
           child: Icon(
             icon,
             color: isActive ? AppTheme.accentPrimary : AppTheme.textTertiary,
-            size: 20,
+            size: 28, // Increased for tablet/cockpit
           ),
         ),
       ),
@@ -225,10 +250,6 @@ class _ControlDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 1,
-      width: 28,
-      color: AppTheme.border,
-    );
+    return Container(height: 1, width: 28, color: AppTheme.border);
   }
 }

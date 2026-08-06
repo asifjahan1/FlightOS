@@ -33,29 +33,72 @@ class _FleetLayerState extends State<FleetLayer> {
           return const MarkerLayer(markers: []);
         }
 
-        final markers = snapshot.data!.map((target) {
+        final targets = snapshot.data!;
+        
+        final polylines = <Polyline>[];
+        final markers = <Marker>[];
+
+        for (final target in targets) {
           // If the location is older than 5 minutes, consider it stale (faded)
           final isStale = DateTime.now().difference(target.updatedAt).inMinutes > 5;
+          final opacity = isStale ? 0.4 : 1.0;
 
-          return Marker(
-            point: LatLng(target.latitude, target.longitude),
-            width: 48,
-            height: 48,
-            child: Opacity(
-              opacity: isStale ? 0.4 : 1.0,
-              child: Transform.rotate(
-                angle: target.heading * math.pi / 180.0,
-                child: const Icon(
-                  Icons.flight,
-                  color: Colors.deepOrangeAccent, // Distinct color for fleet
-                  size: 32,
+          if (target.destinationLatitude != null && target.destinationLongitude != null) {
+            polylines.add(
+              Polyline(
+                points: [
+                  LatLng(target.latitude, target.longitude),
+                  LatLng(target.destinationLatitude!, target.destinationLongitude!),
+                ],
+                color: Colors.deepOrangeAccent.withValues(alpha: opacity),
+                strokeWidth: 4,
+              ),
+            );
+            
+            markers.add(
+              Marker(
+                point: LatLng(target.destinationLatitude!, target.destinationLongitude!),
+                width: 32,
+                height: 32,
+                child: Opacity(
+                  opacity: opacity,
+                  child: const Icon(
+                    Icons.location_on,
+                    color: Colors.deepOrangeAccent,
+                    size: 24,
+                  ),
+                ),
+              ),
+            );
+          }
+
+          markers.add(
+            Marker(
+              point: LatLng(target.latitude, target.longitude),
+              width: 48,
+              height: 48,
+              child: Opacity(
+                opacity: opacity,
+                child: Transform.rotate(
+                  angle: target.heading * math.pi / 180.0,
+                  child: const Icon(
+                    Icons.flight,
+                    color: Colors.deepOrangeAccent,
+                    size: 32,
+                  ),
                 ),
               ),
             ),
           );
-        }).toList();
+        }
 
-        return MarkerLayer(markers: markers);
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            if (polylines.isNotEmpty) PolylineLayer(polylines: polylines),
+            if (markers.isNotEmpty) MarkerLayer(markers: markers),
+          ],
+        );
       },
     );
   }

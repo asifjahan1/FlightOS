@@ -28,12 +28,18 @@ class AirportDao extends DatabaseAccessor<AppDatabase> with _$AirportDaoMixin {
     double minLon,
     double maxLon, {
     int limit = 500,
+    List<String>? types,
   }) {
     return (select(airportTable)
           ..where(
-            (a) =>
-                a.latitude.isBetweenValues(minLat, maxLat) &
-                a.longitude.isBetweenValues(minLon, maxLon),
+            (a) {
+              var condition = a.latitude.isBetweenValues(minLat, maxLat) &
+                              a.longitude.isBetweenValues(minLon, maxLon);
+              if (types != null && types.isNotEmpty) {
+                condition = condition & a.type.isIn(types);
+              }
+              return condition;
+            },
           )
           ..limit(limit))
         .get();

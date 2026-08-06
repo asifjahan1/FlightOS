@@ -79,6 +79,28 @@ class $AirportsTable extends Airports
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _municipalityMeta = const VerificationMeta(
+    'municipality',
+  );
+  @override
+  late final GeneratedColumn<String> municipality = GeneratedColumn<String>(
+    'municipality',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _countryCodeMeta = const VerificationMeta(
+    'countryCode',
+  );
+  @override
+  late final GeneratedColumn<String> countryCode = GeneratedColumn<String>(
+    'country_code',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     icao,
@@ -88,6 +110,8 @@ class $AirportsTable extends Airports
     longitude,
     elevation,
     type,
+    municipality,
+    countryCode,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -155,6 +179,26 @@ class $AirportsTable extends Airports
     } else if (isInserting) {
       context.missing(_typeMeta);
     }
+    if (data.containsKey('municipality')) {
+      context.handle(
+        _municipalityMeta,
+        municipality.isAcceptableOrUnknown(
+          data['municipality']!,
+          _municipalityMeta,
+        ),
+      );
+    }
+    if (data.containsKey('country_code')) {
+      context.handle(
+        _countryCodeMeta,
+        countryCode.isAcceptableOrUnknown(
+          data['country_code']!,
+          _countryCodeMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_countryCodeMeta);
+    }
     return context;
   }
 
@@ -192,6 +236,14 @@ class $AirportsTable extends Airports
         DriftSqlType.string,
         data['${effectivePrefix}type'],
       )!,
+      municipality: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}municipality'],
+      ),
+      countryCode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}country_code'],
+      )!,
     );
   }
 
@@ -209,6 +261,8 @@ class AirportData extends DataClass implements Insertable<AirportData> {
   final double longitude;
   final double elevation;
   final String type;
+  final String? municipality;
+  final String countryCode;
   const AirportData({
     required this.icao,
     this.iata,
@@ -217,6 +271,8 @@ class AirportData extends DataClass implements Insertable<AirportData> {
     required this.longitude,
     required this.elevation,
     required this.type,
+    this.municipality,
+    required this.countryCode,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -230,6 +286,10 @@ class AirportData extends DataClass implements Insertable<AirportData> {
     map['longitude'] = Variable<double>(longitude);
     map['elevation'] = Variable<double>(elevation);
     map['type'] = Variable<String>(type);
+    if (!nullToAbsent || municipality != null) {
+      map['municipality'] = Variable<String>(municipality);
+    }
+    map['country_code'] = Variable<String>(countryCode);
     return map;
   }
 
@@ -242,6 +302,10 @@ class AirportData extends DataClass implements Insertable<AirportData> {
       longitude: Value(longitude),
       elevation: Value(elevation),
       type: Value(type),
+      municipality: municipality == null && nullToAbsent
+          ? const Value.absent()
+          : Value(municipality),
+      countryCode: Value(countryCode),
     );
   }
 
@@ -258,6 +322,8 @@ class AirportData extends DataClass implements Insertable<AirportData> {
       longitude: serializer.fromJson<double>(json['longitude']),
       elevation: serializer.fromJson<double>(json['elevation']),
       type: serializer.fromJson<String>(json['type']),
+      municipality: serializer.fromJson<String?>(json['municipality']),
+      countryCode: serializer.fromJson<String>(json['countryCode']),
     );
   }
   @override
@@ -271,6 +337,8 @@ class AirportData extends DataClass implements Insertable<AirportData> {
       'longitude': serializer.toJson<double>(longitude),
       'elevation': serializer.toJson<double>(elevation),
       'type': serializer.toJson<String>(type),
+      'municipality': serializer.toJson<String?>(municipality),
+      'countryCode': serializer.toJson<String>(countryCode),
     };
   }
 
@@ -282,6 +350,8 @@ class AirportData extends DataClass implements Insertable<AirportData> {
     double? longitude,
     double? elevation,
     String? type,
+    Value<String?> municipality = const Value.absent(),
+    String? countryCode,
   }) => AirportData(
     icao: icao ?? this.icao,
     iata: iata.present ? iata.value : this.iata,
@@ -290,6 +360,8 @@ class AirportData extends DataClass implements Insertable<AirportData> {
     longitude: longitude ?? this.longitude,
     elevation: elevation ?? this.elevation,
     type: type ?? this.type,
+    municipality: municipality.present ? municipality.value : this.municipality,
+    countryCode: countryCode ?? this.countryCode,
   );
   AirportData copyWithCompanion(AirportsCompanion data) {
     return AirportData(
@@ -300,6 +372,12 @@ class AirportData extends DataClass implements Insertable<AirportData> {
       longitude: data.longitude.present ? data.longitude.value : this.longitude,
       elevation: data.elevation.present ? data.elevation.value : this.elevation,
       type: data.type.present ? data.type.value : this.type,
+      municipality: data.municipality.present
+          ? data.municipality.value
+          : this.municipality,
+      countryCode: data.countryCode.present
+          ? data.countryCode.value
+          : this.countryCode,
     );
   }
 
@@ -312,14 +390,25 @@ class AirportData extends DataClass implements Insertable<AirportData> {
           ..write('latitude: $latitude, ')
           ..write('longitude: $longitude, ')
           ..write('elevation: $elevation, ')
-          ..write('type: $type')
+          ..write('type: $type, ')
+          ..write('municipality: $municipality, ')
+          ..write('countryCode: $countryCode')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(icao, iata, name, latitude, longitude, elevation, type);
+  int get hashCode => Object.hash(
+    icao,
+    iata,
+    name,
+    latitude,
+    longitude,
+    elevation,
+    type,
+    municipality,
+    countryCode,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -330,7 +419,9 @@ class AirportData extends DataClass implements Insertable<AirportData> {
           other.latitude == this.latitude &&
           other.longitude == this.longitude &&
           other.elevation == this.elevation &&
-          other.type == this.type);
+          other.type == this.type &&
+          other.municipality == this.municipality &&
+          other.countryCode == this.countryCode);
 }
 
 class AirportsCompanion extends UpdateCompanion<AirportData> {
@@ -341,6 +432,8 @@ class AirportsCompanion extends UpdateCompanion<AirportData> {
   final Value<double> longitude;
   final Value<double> elevation;
   final Value<String> type;
+  final Value<String?> municipality;
+  final Value<String> countryCode;
   final Value<int> rowid;
   const AirportsCompanion({
     this.icao = const Value.absent(),
@@ -350,6 +443,8 @@ class AirportsCompanion extends UpdateCompanion<AirportData> {
     this.longitude = const Value.absent(),
     this.elevation = const Value.absent(),
     this.type = const Value.absent(),
+    this.municipality = const Value.absent(),
+    this.countryCode = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   AirportsCompanion.insert({
@@ -360,13 +455,16 @@ class AirportsCompanion extends UpdateCompanion<AirportData> {
     required double longitude,
     required double elevation,
     required String type,
+    this.municipality = const Value.absent(),
+    required String countryCode,
     this.rowid = const Value.absent(),
   }) : icao = Value(icao),
        name = Value(name),
        latitude = Value(latitude),
        longitude = Value(longitude),
        elevation = Value(elevation),
-       type = Value(type);
+       type = Value(type),
+       countryCode = Value(countryCode);
   static Insertable<AirportData> custom({
     Expression<String>? icao,
     Expression<String>? iata,
@@ -375,6 +473,8 @@ class AirportsCompanion extends UpdateCompanion<AirportData> {
     Expression<double>? longitude,
     Expression<double>? elevation,
     Expression<String>? type,
+    Expression<String>? municipality,
+    Expression<String>? countryCode,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -385,6 +485,8 @@ class AirportsCompanion extends UpdateCompanion<AirportData> {
       if (longitude != null) 'longitude': longitude,
       if (elevation != null) 'elevation': elevation,
       if (type != null) 'type': type,
+      if (municipality != null) 'municipality': municipality,
+      if (countryCode != null) 'country_code': countryCode,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -397,6 +499,8 @@ class AirportsCompanion extends UpdateCompanion<AirportData> {
     Value<double>? longitude,
     Value<double>? elevation,
     Value<String>? type,
+    Value<String?>? municipality,
+    Value<String>? countryCode,
     Value<int>? rowid,
   }) {
     return AirportsCompanion(
@@ -407,6 +511,8 @@ class AirportsCompanion extends UpdateCompanion<AirportData> {
       longitude: longitude ?? this.longitude,
       elevation: elevation ?? this.elevation,
       type: type ?? this.type,
+      municipality: municipality ?? this.municipality,
+      countryCode: countryCode ?? this.countryCode,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -435,6 +541,12 @@ class AirportsCompanion extends UpdateCompanion<AirportData> {
     if (type.present) {
       map['type'] = Variable<String>(type.value);
     }
+    if (municipality.present) {
+      map['municipality'] = Variable<String>(municipality.value);
+    }
+    if (countryCode.present) {
+      map['country_code'] = Variable<String>(countryCode.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -451,6 +563,8 @@ class AirportsCompanion extends UpdateCompanion<AirportData> {
           ..write('longitude: $longitude, ')
           ..write('elevation: $elevation, ')
           ..write('type: $type, ')
+          ..write('municipality: $municipality, ')
+          ..write('countryCode: $countryCode, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1245,6 +1359,8 @@ typedef $$AirportsTableCreateCompanionBuilder =
       required double longitude,
       required double elevation,
       required String type,
+      Value<String?> municipality,
+      required String countryCode,
       Value<int> rowid,
     });
 typedef $$AirportsTableUpdateCompanionBuilder =
@@ -1256,6 +1372,8 @@ typedef $$AirportsTableUpdateCompanionBuilder =
       Value<double> longitude,
       Value<double> elevation,
       Value<String> type,
+      Value<String?> municipality,
+      Value<String> countryCode,
       Value<int> rowid,
     });
 
@@ -1300,6 +1418,16 @@ class $$AirportsTableFilterComposer
 
   ColumnFilters<String> get type => $composableBuilder(
     column: $table.type,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get municipality => $composableBuilder(
+    column: $table.municipality,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get countryCode => $composableBuilder(
+    column: $table.countryCode,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -1347,6 +1475,16 @@ class $$AirportsTableOrderingComposer
     column: $table.type,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get municipality => $composableBuilder(
+    column: $table.municipality,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get countryCode => $composableBuilder(
+    column: $table.countryCode,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$AirportsTableAnnotationComposer
@@ -1378,6 +1516,16 @@ class $$AirportsTableAnnotationComposer
 
   GeneratedColumn<String> get type =>
       $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<String> get municipality => $composableBuilder(
+    column: $table.municipality,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get countryCode => $composableBuilder(
+    column: $table.countryCode,
+    builder: (column) => column,
+  );
 }
 
 class $$AirportsTableTableManager
@@ -1418,6 +1566,8 @@ class $$AirportsTableTableManager
                 Value<double> longitude = const Value.absent(),
                 Value<double> elevation = const Value.absent(),
                 Value<String> type = const Value.absent(),
+                Value<String?> municipality = const Value.absent(),
+                Value<String> countryCode = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => AirportsCompanion(
                 icao: icao,
@@ -1427,6 +1577,8 @@ class $$AirportsTableTableManager
                 longitude: longitude,
                 elevation: elevation,
                 type: type,
+                municipality: municipality,
+                countryCode: countryCode,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -1438,6 +1590,8 @@ class $$AirportsTableTableManager
                 required double longitude,
                 required double elevation,
                 required String type,
+                Value<String?> municipality = const Value.absent(),
+                required String countryCode,
                 Value<int> rowid = const Value.absent(),
               }) => AirportsCompanion.insert(
                 icao: icao,
@@ -1447,6 +1601,8 @@ class $$AirportsTableTableManager
                 longitude: longitude,
                 elevation: elevation,
                 type: type,
+                municipality: municipality,
+                countryCode: countryCode,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

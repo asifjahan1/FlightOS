@@ -1,9 +1,9 @@
 import 'dart:async';
 
+import 'package:injectable/injectable.dart';
 import 'package:skynav/features/telemetry/domain/entities/fleet_target.dart';
 import 'package:skynav/features/telemetry/domain/entities/telemetry_data.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:injectable/injectable.dart';
 
 @lazySingleton
 class FleetTrackingService {
@@ -22,6 +22,8 @@ class FleetTrackingService {
         'altitude': data.altitudeMslFeet,
         'heading': data.trueTrack,
         'speed': data.groundSpeedKnots,
+        'dest_lat': data.destinationLatitude,
+        'dest_lng': data.destinationLongitude,
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       });
     } catch (e) {
@@ -40,7 +42,7 @@ class FleetTrackingService {
           
           return data
               .where((row) => row['id'] != currentUserId) // Filter out ownship
-              .map((row) => FleetTarget.fromJson(row))
+              .map(FleetTarget.fromJson)
               .toList();
         });
   }

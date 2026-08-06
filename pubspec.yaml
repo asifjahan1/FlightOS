@@ -60,6 +60,10 @@ dependencies:
   http: ^1.6.0
   supabase_flutter: ^2.16.0
   firebase_core: ^4.13.0
+  vector_map_tiles: ^9.0.0-beta.7
+  vector_tile_renderer: ^6.1.0
+  csv: ^8.0.0
+  flutter_dotenv: ^6.0.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -74,6 +78,8 @@ dev_dependencies:
   # ── Testing ──
   bloc_test: any
   mocktail: any
+  path_provider_platform_interface: ^2.1.2
+  plugin_platform_interface: ^2.1.8
 
   # ── Linting ──
   flutter_lints: ^6.0.0
@@ -82,4 +88,5 @@ flutter:
   uses-material-design: true
 
   assets:
+    - .env
     - assets/data/

@@ -12,6 +12,7 @@ abstract class AirportRepository {
     required double maxLat,
     required double minLon,
     required double maxLon,
+    List<String>? types,
   });
 
   /// Fetches runways for a specific airport.
@@ -19,4 +20,7 @@ abstract class AirportRepository {
 
   /// Fetches frequencies for a specific airport.
   Future<List<Frequency>> getFrequencies(String airportIcao);
+
+  /// Searches for airports by ICAO, IATA, or name.
+  Future<List<Airport>> searchAirports(String query);
 }

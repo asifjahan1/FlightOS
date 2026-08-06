@@ -11,10 +11,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:skynav/core/constants/map_constants.dart';
 import 'package:skynav/core/theme/app_theme.dart';
+import 'package:skynav/core/utils/nav_math.dart';
 import 'package:skynav/features/airspace/presentation/bloc/airspace_bloc.dart';
 import 'package:skynav/features/airspace/presentation/bloc/airspace_event.dart';
 import 'package:skynav/features/airspace/presentation/bloc/airspace_state.dart';
@@ -22,6 +22,8 @@ import 'package:skynav/features/checklist/presentation/widgets/checklist_panel.d
 import 'package:skynav/features/flight_plan/domain/entities/waypoint.dart';
 import 'package:skynav/features/flight_plan/presentation/bloc/flight_plan_bloc.dart';
 import 'package:skynav/features/map/presentation/bloc/map_bloc.dart';
+import 'package:skynav/features/map/presentation/widgets/airport_search_bar.dart';
+import 'package:skynav/features/traffic/presentation/widgets/aircraft_details_sheet.dart' as skynav_details;
 import 'package:skynav/features/map/presentation/widgets/map_controls.dart';
 import 'package:skynav/features/map/presentation/widgets/map_info_bar.dart';
 import 'package:skynav/features/scratchpad/presentation/widgets/scratchpad_panel.dart';
@@ -32,8 +34,10 @@ import 'package:skynav/features/terrain/presentation/bloc/terrain_bloc.dart';
 import 'package:skynav/features/terrain/presentation/bloc/terrain_event.dart';
 import 'package:skynav/features/terrain/presentation/bloc/terrain_state.dart';
 import 'package:skynav/features/traffic/presentation/bloc/traffic_bloc.dart';
+import 'package:skynav/features/weather/domain/entities/weather_data.dart';
 import 'package:skynav/features/weather/presentation/bloc/weather_bloc.dart';
 import 'package:skynav/features/weather/presentation/bloc/weather_event.dart';
+import 'package:skynav/features/weather/presentation/bloc/weather_state.dart';
 import 'package:window_manager/window_manager.dart';
 
 /// The main map page — home screen of SkyNav.
@@ -113,9 +117,7 @@ class _MapPageState extends State<MapPage> {
         body: Column(
           children: [
             // Custom title bar — on Linux/macOS use native title bar.
-            if (Platform.isLinux || Platform.isMacOS)
-              const SizedBox.shrink()
-            else
+            if (Platform.isWindows)
               const WindowCaption(
                 brightness: Brightness.dark,
                 title: Text('SkyNav', style: TextStyle(color: Colors.white70)),
@@ -127,13 +129,21 @@ class _MapPageState extends State<MapPage> {
                   BlocListener<MapBloc, MapState>(
                     listenWhen: (previous, current) {
                       if (previous is MapReady && current is MapReady) {
-                        return previous.visibleLayers != current.visibleLayers;
+                        return previous.airports != current.airports ||
+                            previous.visibleLayers != current.visibleLayers;
                       }
                       return current is MapReady;
                     },
                     listener: (context, state) {
-                      // Layer visibility changes are handled reactively
-                      // in the BlocBuilder below.
+                      if (state is MapReady &&
+                          state.visibleLayers.contains(MapLayerType.weather) &&
+                          state.airports.isNotEmpty) {
+                        context.read<WeatherBloc>().add(
+                          FetchWeatherForAirports(
+                            state.airports.map((a) => a.icao).toList(),
+                          ),
+                        );
+                      }
                     },
                   ),
                   BlocListener<TelemetryBloc, TelemetryState>(
@@ -147,11 +157,8 @@ class _MapPageState extends State<MapPage> {
                           );
                         }
                       }
-                      // Trigger weather/airspace/terrain updates
+                      // Trigger airspace/terrain updates
                       if (state is TelemetryActive) {
-                        context.read<WeatherBloc>().add(
-                          const FetchWeatherForAirports(['VGHS']),
-                        );
                         context.read<AirspaceBloc>().add(
                           AirspaceLocationUpdated(
                             latitude: state.data.latitude,
@@ -251,11 +258,18 @@ class _MapErrorView extends StatelessWidget {
 }
 
 /// Ready state — displays the map with overlays.
-class _MapReadyView extends StatelessWidget {
+class _MapReadyView extends StatefulWidget {
   const _MapReadyView({required this.state, required this.mapController});
 
   final MapReady state;
   final MapController mapController;
+
+  @override
+  State<_MapReadyView> createState() => _MapReadyViewState();
+}
+
+class _MapReadyViewState extends State<_MapReadyView> {
+  bool _isDrawMode = false;
 
   @override
   Widget build(BuildContext context) {
@@ -271,19 +285,19 @@ class _MapReadyView extends StatelessWidget {
                     : null;
 
                 return FlutterMap(
-                  mapController: mapController,
+                  mapController: widget.mapController,
                   options: MapOptions(
                     initialCenter: LatLng(
-                      state.center.latitude,
-                      state.center.longitude,
+                      widget.state.center.latitude,
+                      widget.state.center.longitude,
                     ),
-                    initialZoom: state.zoom,
+                    initialZoom: widget.state.zoom,
                     minZoom: MapConstants.minZoom,
                     maxZoom: MapConstants.maxZoom,
                     backgroundColor: const Color(0xFF0D1117),
                     onMapEvent: (event) {
                       if (event is MapEventMoveEnd) {
-                        final camera = mapController.camera;
+                        final camera = widget.mapController.camera;
                         final bounds = camera.visibleBounds;
                         if (context.mounted) {
                           context.read<MapBloc>().add(
@@ -300,14 +314,21 @@ class _MapReadyView extends StatelessWidget {
                       }
                     },
                     onTap: (tapPosition, latLng) {
-                      context.read<FlightPlanBloc>().add(
-                        WaypointAdded(
-                          Waypoint(
-                            latitude: latLng.latitude,
-                            longitude: latLng.longitude,
-                            name: 'Custom',
+                      if (_isDrawMode) {
+                        context.read<FlightPlanBloc>().add(
+                          WaypointAdded(
+                            Waypoint(
+                              latitude: latLng.latitude,
+                              longitude: latLng.longitude,
+                              name: 'Custom',
+                            ),
                           ),
-                        ),
+                        );
+                      }
+                    },
+                    onLongPress: (tapPosition, latLng) {
+                      context.read<TelemetryBloc>().add(
+                        TelemetryDestinationSet(latLng),
                       );
                     },
                   ),
@@ -323,7 +344,7 @@ class _MapReadyView extends StatelessWidget {
                     ),
 
                     // ── VFR Chart Overlay ──
-                    if (state.visibleLayers.contains(MapLayerType.vfrChart))
+                    if (widget.state.visibleLayers.contains(MapLayerType.vfrChart))
                       Opacity(
                         opacity: 0.7,
                         child: TileLayer(
@@ -336,7 +357,7 @@ class _MapReadyView extends StatelessWidget {
                       ),
 
                     // ── IFR Chart Overlay ──
-                    if (state.visibleLayers.contains(MapLayerType.ifrChart))
+                    if (widget.state.visibleLayers.contains(MapLayerType.ifrChart))
                       Opacity(
                         opacity: 0.7,
                         child: TileLayer(
@@ -349,7 +370,7 @@ class _MapReadyView extends StatelessWidget {
                       ),
 
                     // ── Terrain Overlay ──
-                    if (state.visibleLayers.contains(MapLayerType.terrain))
+                    if (widget.state.visibleLayers.contains(MapLayerType.terrain))
                       Opacity(
                         opacity: 0.6,
                         child: TileLayer(
@@ -361,7 +382,7 @@ class _MapReadyView extends StatelessWidget {
                       ),
 
                     // ── Weather Radar Overlay ──
-                    if (state.visibleLayers.contains(MapLayerType.weather))
+                    if (widget.state.visibleLayers.contains(MapLayerType.weather))
                       const SizedBox.shrink(), // Temporarily disabled: RainViewer tile cache returns 429/404 and crashes the app
                     // ── Airspace Polygons ──
                     if (airspaceState is AirspaceLoaded)
@@ -395,30 +416,104 @@ class _MapReadyView extends StatelessWidget {
                         ],
                       ),
 
+                    // ── Direct-To Line (Destination) ──
+                    if (activePlan != null && activePlan.destination != null)
+                      BlocBuilder<TelemetryBloc, TelemetryState>(
+                        builder: (context, telemetryState) {
+                          if (telemetryState is TelemetryActive) {
+                            return PolylineLayer(
+                              polylines: [
+                                Polyline(
+                                  points: [
+                                    LatLng(
+                                      telemetryState.data.latitude,
+                                      telemetryState.data.longitude,
+                                    ),
+                                    LatLng(
+                                      activePlan.destination!.latitude,
+                                      activePlan.destination!.longitude,
+                                    ),
+                                  ],
+                                  color: const Color(
+                                    0xFF00FFFF,
+                                  ), // Cyan for Direct-To
+                                  strokeWidth: 3,
+                                  pattern: const StrokePattern.dotted(),
+                                ),
+                              ],
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                      ),
+
                     // ── Airport Markers ──
-                    if (state.visibleLayers.contains(MapLayerType.airports))
+                    if (widget.state.visibleLayers.contains(MapLayerType.airports))
                       MarkerLayer(
-                        markers: state.airports.map((airport) {
+                        markers: widget.state.airports.map((airport) {
                           return Marker(
                             point: LatLng(airport.latitude, airport.longitude),
                             width: 32,
                             height: 32,
                             child: GestureDetector(
                               onTap: () {
-                                context.read<FlightPlanBloc>().add(
-                                  WaypointAdded(
-                                    Waypoint(
-                                      latitude: airport.latitude,
-                                      longitude: airport.longitude,
-                                      name: airport.icao,
-                                      elevation: airport.elevation,
-                                    ),
-                                  ),
+                                final waypoint = Waypoint(
+                                  latitude: airport.latitude,
+                                  longitude: airport.longitude,
+                                  name: airport.icao,
+                                  elevation: airport.elevation,
                                 );
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Added ${airport.icao} to route',
+                                showModalBottomSheet(
+                                  context: context,
+                                  builder: (ctx) => SafeArea(
+                                    child: Wrap(
+                                      children: [
+                                        ListTile(
+                                          leading: const Icon(
+                                            Icons.add_location_alt,
+                                          ),
+                                          title: const Text('Add to Route'),
+                                          onTap: () {
+                                            Navigator.pop(ctx);
+                                            context.read<FlightPlanBloc>().add(
+                                              WaypointAdded(waypoint),
+                                            );
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  'Added ${airport.icao} to route',
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                        ListTile(
+                                          leading: const Icon(
+                                            Icons.flight_takeoff,
+                                            color: Color(0xFF00FFFF),
+                                          ),
+                                          title: const Text(
+                                            'Direct-To (Set Destination)',
+                                          ),
+                                          onTap: () {
+                                            Navigator.pop(ctx);
+                                            context.read<FlightPlanBloc>().add(
+                                              DestinationSet(waypoint),
+                                            );
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  'Direct-To ${airport.icao} set',
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 );
@@ -442,6 +537,238 @@ class _MapReadyView extends StatelessWidget {
                           );
                         }).toList(),
                       ),
+
+                    // ── Weather Markers (VFR/IFR Conditions) ──
+                    if (widget.state.visibleLayers.contains(MapLayerType.weather))
+                      BlocBuilder<WeatherBloc, WeatherState>(
+                        builder: (context, weatherState) {
+                          if (weatherState is WeatherLoaded) {
+                            return MarkerLayer(
+                              markers: widget.state.airports
+                                  .where(
+                                    (a) => weatherState.reports.containsKey(
+                                      a.icao,
+                                    ),
+                                  )
+                                  .map((airport) {
+                                    final report =
+                                        weatherState.reports[airport.icao]!;
+                                    Color catColor = Colors.grey;
+                                    switch (report.category) {
+                                      case FlightCategory.vfr:
+                                        catColor = Colors.green;
+                                        break;
+                                      case FlightCategory.mvfr:
+                                        catColor = Colors.blue;
+                                        break;
+                                      case FlightCategory.ifr:
+                                        catColor = Colors.red;
+                                        break;
+                                      case FlightCategory.lifr:
+                                        catColor = Colors.purple;
+                                        break;
+                                      case FlightCategory.unknown:
+                                        catColor = Colors.grey;
+                                        break;
+                                    }
+
+                                    var weatherIcon = Icons.cloud;
+                                    if (report.cloudCover == 'CLR' ||
+                                        report.cloudCover == 'SKC') {
+                                      weatherIcon = Icons.wb_sunny;
+                                    } else if (report.cloudCover == 'FEW' ||
+                                        report.cloudCover == 'SCT') {
+                                      weatherIcon = Icons.wb_cloudy_outlined;
+                                    } else if (report.cloudCover == 'BKN' ||
+                                        report.cloudCover == 'OVC') {
+                                      weatherIcon = Icons.cloud;
+                                    }
+
+                                    final tempText = report.tempC != null
+                                        ? '${report.tempC!.round()}°C'
+                                        : '';
+                                    final windText = report.windSpeed != null
+                                        ? '${report.windSpeed}kt'
+                                        : '';
+                                    final weatherText = [
+                                      tempText,
+                                      windText,
+                                    ].where((s) => s.isNotEmpty).join(' ');
+
+                                    return Marker(
+                                      point: LatLng(
+                                        airport.latitude,
+                                        airport.longitude,
+                                      ),
+                                      width: 100,
+                                      height: 40,
+                                      alignment:
+                                          Alignment.topRight, // Offset slightly
+                                      child: Tooltip(
+                                        message:
+                                            'METAR:\n${report.rawMetar}\n\nTAF:\n${report.rawTaf}',
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 6,
+                                            vertical: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: catColor,
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                            border: Border.all(
+                                              color: Colors.black54,
+                                              width: 2,
+                                            ),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black.withValues(
+                                                  alpha: 0.5,
+                                                ),
+                                                blurRadius: 4,
+                                              ),
+                                            ],
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                weatherIcon,
+                                                color: Colors.white,
+                                                size: 14,
+                                              ),
+                                              if (weatherText.isNotEmpty) ...[
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  weatherText,
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ],
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  })
+                                  .toList(),
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                      ),
+
+                    // ── Ownship Telemetry Route (Polyline & Label) ──
+                    BlocBuilder<TelemetryBloc, TelemetryState>(
+                      builder: (context, telemetryState) {
+                        if (telemetryState is TelemetryActive &&
+                            telemetryState.data.destinationLatitude != null &&
+                            telemetryState.data.destinationLongitude != null) {
+                          
+                          final p1 = LatLng(
+                            telemetryState.data.latitude,
+                            telemetryState.data.longitude,
+                          );
+                          final p2 = LatLng(
+                            telemetryState.data.destinationLatitude!,
+                            telemetryState.data.destinationLongitude!,
+                          );
+                          
+                          // Calculate midpoint
+                          final midLat = (p1.latitude + p2.latitude) / 2;
+                          final midLon = (p1.longitude + p2.longitude) / 2;
+                          
+                          // Calculate distance and ETE
+                          final distanceKm = NavMath.distanceKm(
+                            p1.latitude,
+                            p1.longitude,
+                            p2.latitude,
+                            p2.longitude,
+                          );
+                          final distanceNm = NavMath.distanceNm(
+                            p1.latitude,
+                            p1.longitude,
+                            p2.latitude,
+                            p2.longitude,
+                          );
+                          final eteMins = NavMath.calculateEteMinutes(
+                            distanceNm,
+                            telemetryState.data.groundSpeedKnots,
+                          );
+                          final eteStr = NavMath.formatEteDh(eteMins);
+
+                          return Stack(
+                            children: [
+                              PolylineLayer(
+                                polylines: [
+                                  Polyline(
+                                    points: [p1, p2],
+                                    color: Colors.blueAccent,
+                                    strokeWidth: 4,
+                                  ),
+                                ],
+                              ),
+                              MarkerLayer(
+                                markers: [
+                                  Marker(
+                                    point: LatLng(midLat, midLon),
+                                    width: 100,
+                                    height: 52,
+                                    alignment: Alignment.center,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF1E1E24).withValues(alpha: 0.85),
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          color: Colors.blueAccent.withValues(alpha: 0.7),
+                                          width: 1.5,
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(alpha: 0.3),
+                                            blurRadius: 6,
+                                            offset: const Offset(0, 3),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            '${distanceKm.toStringAsFixed(1)} KM',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              letterSpacing: 0.5,
+                                            ),
+                                          ),
+                                          Text(
+                                            'ETE $eteStr',
+                                            style: TextStyle(
+                                              color: Colors.blueAccent.shade100,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      },
+                    ),
 
                     // ── Ownship Telemetry Marker ──
                     BlocBuilder<TelemetryBloc, TelemetryState>(
@@ -468,6 +795,21 @@ class _MapReadyView extends StatelessWidget {
                                   ),
                                 ),
                               ),
+                              if (telemetryState.data.destinationLatitude != null &&
+                                  telemetryState.data.destinationLongitude != null)
+                                Marker(
+                                  point: LatLng(
+                                    telemetryState.data.destinationLatitude!,
+                                    telemetryState.data.destinationLongitude!,
+                                  ),
+                                  width: 48,
+                                  height: 48,
+                                  child: const Icon(
+                                    Icons.location_on,
+                                    color: Colors.redAccent,
+                                    size: 36,
+                                  ),
+                                ),
                             ],
                           );
                         }
@@ -479,7 +821,7 @@ class _MapReadyView extends StatelessWidget {
                     const FleetLayer(),
 
                     // ── Traffic Markers ──
-                    if (state.visibleLayers.contains(MapLayerType.traffic))
+                    if (widget.state.visibleLayers.contains(MapLayerType.traffic))
                       BlocBuilder<TrafficBloc, TrafficState>(
                         builder: (context, trafficState) {
                           if (trafficState is TrafficActive) {
@@ -492,9 +834,16 @@ class _MapReadyView extends StatelessWidget {
                                   ),
                                   width: 64,
                                   height: 48,
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      showModalBottomSheet(
+                                        context: context,
+                                        builder: (ctx) => skynav_details.AircraftDetailsSheet(target: target),
+                                      );
+                                    },
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
                                       Transform.rotate(
                                         angle:
                                             target.trackDegrees *
@@ -532,6 +881,7 @@ class _MapReadyView extends StatelessWidget {
                                       ),
                                     ],
                                   ),
+                                ),
                                 );
                               }).toList(),
                             );
@@ -556,28 +906,37 @@ class _MapReadyView extends StatelessWidget {
                   telemetryState is TelemetryActive &&
                   telemetryState.followModeEnabled;
               return MapControls(
-                currentZoom: state.zoom,
-                visibleLayers: state.visibleLayers,
+                currentZoom: widget.state.zoom,
+                visibleLayers: widget.state.visibleLayers,
                 isFollowing: isFollowing,
                 onFollowToggle: () {
                   context.read<TelemetryBloc>().add(
                     const TelemetryFollowToggled(),
                   );
                 },
+                isDrawMode: _isDrawMode,
+                onDrawModeToggle: () {
+                  setState(() {
+                    _isDrawMode = !_isDrawMode;
+                  });
+                },
+                onClearRoute: () {
+                  context.read<FlightPlanBloc>().add(const FlightPlanCleared());
+                },
                 onZoomIn: () {
-                  final newZoom = (state.zoom + 1).clamp(
+                  final newZoom = (widget.state.zoom + 1).clamp(
                     MapConstants.minZoom,
                     MapConstants.maxZoom,
                   );
-                  mapController.move(mapController.camera.center, newZoom);
+                  widget.mapController.move(widget.mapController.camera.center, newZoom);
                   context.read<MapBloc>().add(MapZoomChanged(zoom: newZoom));
                 },
                 onZoomOut: () {
-                  final newZoom = (state.zoom - 1).clamp(
+                  final newZoom = (widget.state.zoom - 1).clamp(
                     MapConstants.minZoom,
                     MapConstants.maxZoom,
                   );
-                  mapController.move(mapController.camera.center, newZoom);
+                  widget.mapController.move(widget.mapController.camera.center, newZoom);
                   context.read<MapBloc>().add(MapZoomChanged(zoom: newZoom));
                 },
                 onLayerToggle: (layer) {
@@ -653,8 +1012,8 @@ class _MapReadyView extends StatelessWidget {
                   ? flightPlanState.flightPlan
                   : null;
               return MapInfoBar(
-                center: state.center,
-                zoom: state.zoom,
+                center: widget.state.center,
+                zoom: widget.state.zoom,
                 activePlan: activePlan,
               );
             },
@@ -688,6 +1047,17 @@ class _MapReadyView extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+        ),
+
+        // ── Search Bar (top-center) ──
+        const Positioned(
+          top: 16,
+          left: 0,
+          right: 0,
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: AirportSearchBar(),
           ),
         ),
 

@@ -25,12 +25,14 @@ class AirportRepositoryImpl implements AirportRepository {
     required double maxLat,
     required double minLon,
     required double maxLon,
+    List<String>? types,
   }) async {
     final list = await _dao.getAirportsInBoundingBox(
       minLat: minLat,
       maxLat: maxLat,
       minLon: minLon,
       maxLon: maxLon,
+      types: types,
     );
     return list.map(_mapAirport).toList();
   }
@@ -47,6 +49,12 @@ class AirportRepositoryImpl implements AirportRepository {
     return list.map(_mapFrequency).toList();
   }
 
+  @override
+  Future<List<Airport>> searchAirports(String query) async {
+    final list = await _dao.searchAirports(query);
+    return list.map(_mapAirport).toList();
+  }
+
   // --- Mappers ---
 
   Airport _mapAirport(AirportData data) {
@@ -58,6 +66,8 @@ class AirportRepositoryImpl implements AirportRepository {
       longitude: data.longitude,
       elevation: data.elevation,
       type: data.type,
+      municipality: data.municipality,
+      countryCode: data.countryCode,
     );
   }
 

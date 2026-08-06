@@ -7,7 +7,22 @@ sealed class AirspaceEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-class AirspacesLoaded extends AirspaceEvent {}
+class AirspacesLoaded extends AirspaceEvent {
+  const AirspacesLoaded({
+    required this.latMin,
+    required this.lonMin,
+    required this.latMax,
+    required this.lonMax,
+  });
+
+  final double latMin;
+  final double lonMin;
+  final double latMax;
+  final double lonMax;
+
+  @override
+  List<Object?> get props => [latMin, lonMin, latMax, lonMax];
+}
 
 class AirspaceLocationUpdated extends AirspaceEvent {
   // feet MSL

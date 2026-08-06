@@ -41,6 +41,18 @@ class CruiseSpeedUpdated extends FlightPlanEvent {
   List<Object?> get props => [speedKnots];
 }
 
+class DestinationSet extends FlightPlanEvent {
+  const DestinationSet(this.destination);
+  final Waypoint destination;
+
+  @override
+  List<Object?> get props => [destination];
+}
+
+class DestinationCleared extends FlightPlanEvent {
+  const DestinationCleared();
+}
+
 // ── States ──
 
 sealed class FlightPlanState extends Equatable {
@@ -71,6 +83,8 @@ class FlightPlanBloc extends Bloc<FlightPlanEvent, FlightPlanState> {
     on<WaypointRemoved>(_onWaypointRemoved);
     on<FlightPlanCleared>(_onFlightPlanCleared);
     on<CruiseSpeedUpdated>(_onCruiseSpeedUpdated);
+    on<DestinationSet>(_onDestinationSet);
+    on<DestinationCleared>(_onDestinationCleared);
   }
 
   void _onWaypointAdded(WaypointAdded event, Emitter<FlightPlanState> emit) {
@@ -106,6 +120,27 @@ class FlightPlanBloc extends Bloc<FlightPlanEvent, FlightPlanState> {
     if (state is FlightPlanActive) {
       final currentPlan = (state as FlightPlanActive).flightPlan;
       emit(FlightPlanActive(currentPlan.copyWith(cruiseSpeedKnots: event.speedKnots)));
+    }
+  }
+
+  void _onDestinationSet(DestinationSet event, Emitter<FlightPlanState> emit) {
+    if (state is FlightPlanActive) {
+      final currentPlan = (state as FlightPlanActive).flightPlan;
+      emit(FlightPlanActive(currentPlan.copyWith(destination: event.destination)));
+    } else {
+      emit(FlightPlanActive(FlightPlan(waypoints: const [], destination: event.destination)));
+    }
+  }
+
+  void _onDestinationCleared(DestinationCleared event, Emitter<FlightPlanState> emit) {
+    if (state is FlightPlanActive) {
+      final currentPlan = (state as FlightPlanActive).flightPlan;
+      final newPlan = currentPlan.copyWith(clearDestination: true);
+      if (newPlan.waypoints.isEmpty) {
+        emit(const FlightPlanInitial());
+      } else {
+        emit(FlightPlanActive(newPlan));
+      }
     }
   }
 }
