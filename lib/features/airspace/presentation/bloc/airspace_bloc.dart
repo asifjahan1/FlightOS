@@ -19,7 +19,12 @@ class AirspaceBloc extends Bloc<AirspaceEvent, AirspaceState> {
   ) async {
     emit(AirspaceLoading());
     try {
-      final airspaces = await _service.getAirspaces();
+      final airspaces = await _service.getAirspaces(
+        latMin: event.latMin,
+        lonMin: event.lonMin,
+        latMax: event.latMax,
+        lonMax: event.lonMax,
+      );
       emit(AirspaceLoaded(airspaces: airspaces));
     } catch (e) {
       emit(AirspaceError(e.toString()));

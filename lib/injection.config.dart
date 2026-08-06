@@ -20,6 +20,7 @@ import 'features/airport/data/repositories/airport_repository_impl.dart'
 import 'features/airport/data/seed/airport_seeder.dart' as _i969;
 import 'features/airport/domain/repositories/airport_repository.dart' as _i1064;
 import 'features/airspace/data/airspace_service.dart' as _i654;
+import 'features/airspace/data/datasources/openaip_api_client.dart' as _i291;
 import 'features/airspace/presentation/bloc/airspace_bloc.dart' as _i949;
 import 'features/checklist/presentation/bloc/checklist_bloc.dart' as _i268;
 import 'features/flight_plan/presentation/bloc/flight_plan_bloc.dart' as _i1022;
@@ -44,7 +45,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i1022.FlightPlanBloc>(() => _i1022.FlightPlanBloc());
     gh.factory<_i153.ScratchpadBloc>(() => _i153.ScratchpadBloc());
     gh.lazySingleton<_i234.AppDatabase>(() => _i234.AppDatabase());
-    gh.lazySingleton<_i654.AirspaceService>(() => _i654.AirspaceService());
+    gh.lazySingleton<_i291.OpenAipApiClient>(() => _i291.OpenAipApiClient());
     gh.lazySingleton<_i381.FleetTrackingService>(
       () => _i381.FleetTrackingService(),
     );
@@ -55,6 +56,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i290.TrafficService>(
       () => _i290.OpenSkyTrafficService(gh<_i406.LocationService>()),
+    );
+    gh.lazySingleton<_i654.AirspaceService>(
+      () => _i654.AirspaceService(gh<_i291.OpenAipApiClient>()),
     );
     gh.factory<_i695.TelemetryBloc>(
       () => _i695.TelemetryBloc(

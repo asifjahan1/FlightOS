@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:skynav/features/airport/domain/entities/airport.dart';
 import 'package:skynav/features/airport/data/datasources/overpass_api_client.dart';
 import 'package:skynav/features/weather/presentation/widgets/weather_display_card.dart';
-import 'package:skynav/database/app_database.dart';
+import 'package:skynav/core/database/database.dart';
 import 'package:skynav/injection.dart';
 
 class AirportDetailsPanel extends StatefulWidget {
@@ -18,7 +18,7 @@ class _AirportDetailsPanelState extends State<AirportDetailsPanel> {
   final OverpassApiClient _overpassApi = OverpassApiClient();
   final AppDatabase _db = sl<AppDatabase>();
   
-  List<RunwayEntry>? _runways;
+  List<RunwayData>? _runways;
   List<String>? _facilities;
 
   @override
@@ -29,10 +29,10 @@ class _AirportDetailsPanelState extends State<AirportDetailsPanel> {
 
   Future<void> _fetchDetails() async {
     // Fetch runways from local SQLite
-    final airportEntry = await (_db.select(_db.airportTable)..where((a) => a.icaoCode.equals(widget.airport.icao))).getSingleOrNull();
+    final airportEntry = await (_db.select(_db.airports)..where((a) => a.icao.equals(widget.airport.icao))).getSingleOrNull();
     final runways = airportEntry != null
-        ? await (_db.select(_db.runwayTable)..where((r) => r.airportId.equals(airportEntry.id))).get()
-        : <RunwayEntry>[];
+        ? await (_db.select(_db.runways)..where((r) => r.airportIcao.equals(airportEntry.icao))).get()
+        : <RunwayData>[];
     
     // Fetch facilities live from OSM
     final facilities = await _overpassApi.fetchAirportFacilities(widget.airport.latitude, widget.airport.longitude);
@@ -63,7 +63,7 @@ class _AirportDetailsPanelState extends State<AirportDetailsPanel> {
               children: [
                 Expanded(
                   child: Text(
-                    '\${widget.airport.icao} - \${widget.airport.name}',
+                    '${widget.airport.icao} - ${widget.airport.name}',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -73,7 +73,7 @@ class _AirportDetailsPanelState extends State<AirportDetailsPanel> {
                 ),
               ],
             ),
-            Text("\${widget.airport.municipality ?? 'Unknown City'}, \${widget.airport.countryCode}", 
+            Text("${widget.airport.municipality ?? 'Unknown City'}, ${widget.airport.countryCode}", 
                  style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey)),
             const SizedBox(height: 24),
             
@@ -85,9 +85,8 @@ class _AirportDetailsPanelState extends State<AirportDetailsPanel> {
             else ..._runways!.map((r) => ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.add_road),
-              title: Text('Rwy \${r.designator}'),
-              subtitle: Text("\${r.lengthFt?.round() ?? 'Unknown'} ft • \${r.surface ?? 'Unknown surface'}"),
-              trailing: r.lighted ? const Icon(Icons.lightbulb, color: Colors.yellow, size: 16) : null,
+              title: Text('Rwy ${r.ident}'),
+              subtitle: Text("${r.length.round()} ft • ${r.surface ?? 'Unknown surface'}"),
             )),
             
             const SizedBox(height: 24),

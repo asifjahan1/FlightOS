@@ -22,4 +22,8 @@ class ApiConstants {
   
   // Future MapLibre or Mapbox API key if required
   static String get mapboxApiKey => dotenv.env['MAPBOX_API_KEY'] ?? '';
+
+  // OpenAIP API (Aviation Data & Airspaces)
+  static const String openAipApiEndpoint = 'https://api.core.openaip.net/api';
+  static String get openAipApiKey => dotenv.env['OPENAIP_CLIENT_ID'] ?? '';
 }

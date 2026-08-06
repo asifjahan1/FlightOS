@@ -12,5 +12,7 @@ abstract class Airport with _$Airport {
     required double longitude,
     required double elevation, // in feet
     required String type, // e.g., large_airport, medium_airport, small_airport
+    String? municipality,
+    required String countryCode,
   }) = _Airport;
 }

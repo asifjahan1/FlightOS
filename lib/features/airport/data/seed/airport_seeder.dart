@@ -36,6 +36,8 @@ class AirportSeeder {
           longitude: (json['longitude'] as num).toDouble(),
           elevation: (json['elevation'] as num).toDouble(),
           type: json['type'] as String,
+          municipality: Value(json['municipality'] as String?),
+          countryCode: json['countryCode'] as String? ?? 'US',
         );
       }).toList();
 

@@ -34,7 +34,12 @@ class SkyNavApp extends StatelessWidget {
           create: (_) => sl<TrafficBloc>()..add(const TrafficStarted()),
         ),
         BlocProvider<AirspaceBloc>(
-          create: (_) => sl<AirspaceBloc>()..add(AirspacesLoaded()),
+          create: (_) => sl<AirspaceBloc>()..add(const AirspacesLoaded(
+            latMin: 20.0,
+            lonMin: 88.0,
+            latMax: 27.0,
+            lonMax: 93.0,
+          )),
         ),
         BlocProvider<WeatherBloc>(create: (_) => sl<WeatherBloc>()),
         BlocProvider<TerrainBloc>(create: (_) => sl<TerrainBloc>()),

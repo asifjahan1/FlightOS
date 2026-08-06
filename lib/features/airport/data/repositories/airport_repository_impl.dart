@@ -66,6 +66,8 @@ class AirportRepositoryImpl implements AirportRepository {
       longitude: data.longitude,
       elevation: data.elevation,
       type: data.type,
+      municipality: data.municipality,
+      countryCode: data.countryCode,
     );
   }
 
