@@ -82,14 +82,14 @@ class AircraftState extends Equatable {
 
   @override
   List<Object?> get props => [
-        icao24,
-        callsign,
-        timePosition,
-        longitude,
-        latitude,
-        baroAltitude,
-        trueTrack,
-        velocity,
-        onGround,
-      ];
+    icao24,
+    callsign,
+    timePosition,
+    longitude,
+    latitude,
+    baroAltitude,
+    trueTrack,
+    velocity,
+    onGround,
+  ];
 }

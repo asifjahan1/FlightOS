@@ -65,7 +65,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '962754751737',
     projectId: 'flightos-e9684',
     storageBucket: 'flightos-e9684.firebasestorage.app',
-    iosClientId: '962754751737-53qp69fup5l9va7pqqd5ank1v3tdb4uc.apps.googleusercontent.com',
+    iosClientId:
+        '962754751737-53qp69fup5l9va7pqqd5ank1v3tdb4uc.apps.googleusercontent.com',
     iosBundleId: 'com.example.skynav',
   );
 }

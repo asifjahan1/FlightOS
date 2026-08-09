@@ -10,7 +10,6 @@ sealed class TerrainState extends Equatable {
 class TerrainInitial extends TerrainState {}
 
 class TerrainUpdated extends TerrainState {
-
   const TerrainUpdated({
     required this.currentElevation,
     required this.agl,

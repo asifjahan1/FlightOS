@@ -34,12 +34,15 @@ class WeatherService {
     return 'https://tilecache.rainviewer.com/v2/radar/1691234567/256/{z}/{x}/{y}/2/1_1.png'; // Fallback
   }
 
-  Future<List<WeatherReport>> getWeatherForAirports(List<String> airportIds) async {
+  Future<List<WeatherReport>> getWeatherForAirports(
+    List<String> airportIds,
+  ) async {
     final results = <WeatherReport>[];
     final idsToFetch = <String>[];
 
     for (final id in airportIds) {
-      if (_cache.containsKey(id) && DateTime.now().difference(_cache[id]!.timestamp).inMinutes < 15) {
+      if (_cache.containsKey(id) &&
+          DateTime.now().difference(_cache[id]!.timestamp).inMinutes < 15) {
         results.add(_cache[id]!);
       } else {
         idsToFetch.add(id);
@@ -51,17 +54,28 @@ class WeatherService {
     // Batch requests in chunks of 50 to avoid URI length limits
     const chunkSize = 50;
     for (var i = 0; i < idsToFetch.length; i += chunkSize) {
-      final chunk = idsToFetch.sublist(i, min(i + chunkSize, idsToFetch.length));
+      final chunk = idsToFetch.sublist(
+        i,
+        min(i + chunkSize, idsToFetch.length),
+      );
       final idsParam = chunk.join(',');
 
       try {
-        final metarRes = await http.get(
-          Uri.parse('https://aviationweather.gov/api/data/metar?ids=$idsParam&format=json'),
-        ).timeout(const Duration(seconds: 10));
+        final metarRes = await http
+            .get(
+              Uri.parse(
+                'https://aviationweather.gov/api/data/metar?ids=$idsParam&format=json',
+              ),
+            )
+            .timeout(const Duration(seconds: 10));
 
-        final tafRes = await http.get(
-          Uri.parse('https://aviationweather.gov/api/data/taf?ids=$idsParam&format=json'),
-        ).timeout(const Duration(seconds: 10));
+        final tafRes = await http
+            .get(
+              Uri.parse(
+                'https://aviationweather.gov/api/data/taf?ids=$idsParam&format=json',
+              ),
+            )
+            .timeout(const Duration(seconds: 10));
 
         final tafMap = <String, String>{};
         if (tafRes.statusCode == 200) {
@@ -84,7 +98,7 @@ class WeatherService {
 
             final rawMetar = data['rawOb'] as String? ?? 'No METAR available';
             final fltCatStr = data['fltCat'] as String?;
-            
+
             var category = FlightCategory.vfr;
             if (fltCatStr == 'MVFR') category = FlightCategory.mvfr;
             if (fltCatStr == 'IFR') category = FlightCategory.ifr;
@@ -93,7 +107,9 @@ class WeatherService {
             final rawTaf = tafMap[icao] ?? 'No TAF available';
             final tempC = (data['temp'] as num?)?.toDouble();
             final windDirRaw = data['wdir'];
-            final windDir = windDirRaw is num ? windDirRaw.toInt() : (int.tryParse(windDirRaw.toString()));
+            final windDir = windDirRaw is num
+                ? windDirRaw.toInt()
+                : (int.tryParse(windDirRaw.toString()));
             final windSpeed = (data['wspd'] as num?)?.toInt();
             final cloudCover = data['cover'] as String?;
 

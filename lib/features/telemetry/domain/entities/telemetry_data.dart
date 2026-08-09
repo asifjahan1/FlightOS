@@ -55,20 +55,24 @@ class TelemetryData extends Equatable {
       groundSpeedKnots: groundSpeedKnots ?? this.groundSpeedKnots,
       trueTrack: trueTrack ?? this.trueTrack,
       accuracyMeters: accuracyMeters ?? this.accuracyMeters,
-      destinationLatitude: clearDestination ? null : (destinationLatitude ?? this.destinationLatitude),
-      destinationLongitude: clearDestination ? null : (destinationLongitude ?? this.destinationLongitude),
+      destinationLatitude: clearDestination
+          ? null
+          : (destinationLatitude ?? this.destinationLatitude),
+      destinationLongitude: clearDestination
+          ? null
+          : (destinationLongitude ?? this.destinationLongitude),
     );
   }
 
   @override
   List<Object?> get props => [
-        latitude,
-        longitude,
-        altitudeMslFeet,
-        groundSpeedKnots,
-        trueTrack,
-        accuracyMeters,
-        destinationLatitude,
-        destinationLongitude,
-      ];
+    latitude,
+    longitude,
+    altitudeMslFeet,
+    groundSpeedKnots,
+    trueTrack,
+    accuracyMeters,
+    destinationLatitude,
+    destinationLongitude,
+  ];
 }

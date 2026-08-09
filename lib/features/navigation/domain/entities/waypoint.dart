@@ -148,10 +148,7 @@ class FlightRoute extends Equatable {
   /// All waypoints in route order (including first and last).
   List<Waypoint> get waypoints {
     if (legs.isEmpty) return [];
-    return [
-      legs.first.from,
-      ...legs.map((leg) => leg.to),
-    ];
+    return [legs.first.from, ...legs.map((leg) => leg.to)];
   }
 
   /// Departure waypoint.

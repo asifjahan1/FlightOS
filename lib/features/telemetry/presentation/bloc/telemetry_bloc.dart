@@ -56,18 +56,12 @@ class TelemetryInitial extends TelemetryState {
 }
 
 class TelemetryActive extends TelemetryState {
-  const TelemetryActive({
-    required this.data,
-    this.followModeEnabled = false,
-  });
+  const TelemetryActive({required this.data, this.followModeEnabled = false});
 
   final TelemetryData data;
   final bool followModeEnabled;
 
-  TelemetryActive copyWith({
-    TelemetryData? data,
-    bool? followModeEnabled,
-  }) {
+  TelemetryActive copyWith({TelemetryData? data, bool? followModeEnabled}) {
     return TelemetryActive(
       data: data ?? this.data,
       followModeEnabled: followModeEnabled ?? this.followModeEnabled,
@@ -81,7 +75,8 @@ class TelemetryActive extends TelemetryState {
 // ── BLoC ──
 @injectable
 class TelemetryBloc extends Bloc<TelemetryEvent, TelemetryState> {
-  TelemetryBloc(this._locationService, this._fleetTrackingService) : super(const TelemetryInitial()) {
+  TelemetryBloc(this._locationService, this._fleetTrackingService)
+    : super(const TelemetryInitial()) {
     on<TelemetryStarted>(_onStarted);
     on<_TelemetryUpdated>(_onUpdated);
     on<TelemetryFollowToggled>(_onFollowToggled);
@@ -102,11 +97,12 @@ class TelemetryBloc extends Bloc<TelemetryEvent, TelemetryState> {
 
   void _onUpdated(_TelemetryUpdated event, Emitter<TelemetryState> emit) {
     var newData = event.data;
-    
+
     // Preserve destination if it exists in the current active state
     if (state is TelemetryActive) {
       final activeState = state as TelemetryActive;
-      if (activeState.data.destinationLatitude != null && activeState.data.destinationLongitude != null) {
+      if (activeState.data.destinationLatitude != null &&
+          activeState.data.destinationLongitude != null) {
         newData = newData.copyWith(
           destinationLatitude: activeState.data.destinationLatitude,
           destinationLongitude: activeState.data.destinationLongitude,
@@ -121,14 +117,20 @@ class TelemetryBloc extends Bloc<TelemetryEvent, TelemetryState> {
     _fleetTrackingService.broadcastLocation(newData);
   }
 
-  void _onFollowToggled(TelemetryFollowToggled event, Emitter<TelemetryState> emit) {
+  void _onFollowToggled(
+    TelemetryFollowToggled event,
+    Emitter<TelemetryState> emit,
+  ) {
     if (state is TelemetryActive) {
       final active = state as TelemetryActive;
       emit(active.copyWith(followModeEnabled: !active.followModeEnabled));
     }
   }
 
-  void _onDestinationSet(TelemetryDestinationSet event, Emitter<TelemetryState> emit) {
+  void _onDestinationSet(
+    TelemetryDestinationSet event,
+    Emitter<TelemetryState> emit,
+  ) {
     if (state is TelemetryActive) {
       final active = state as TelemetryActive;
       final newData = active.data.copyWith(
@@ -140,7 +142,10 @@ class TelemetryBloc extends Bloc<TelemetryEvent, TelemetryState> {
     }
   }
 
-  void _onDestinationCleared(TelemetryDestinationCleared event, Emitter<TelemetryState> emit) {
+  void _onDestinationCleared(
+    TelemetryDestinationCleared event,
+    Emitter<TelemetryState> emit,
+  ) {
     if (state is TelemetryActive) {
       final active = state as TelemetryActive;
       final newData = active.data.copyWith(clearDestination: true);
