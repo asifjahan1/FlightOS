@@ -7,14 +7,16 @@ import 'package:skynav/features/weather/presentation/bloc/weather_state.dart';
 
 @injectable
 class WeatherBloc extends Bloc<WeatherEvent, WeatherState> {
-
   WeatherBloc(this._service) : super(WeatherInitial()) {
     on<FetchWeatherForAirports>(_onFetchWeather);
     on<ToggleWeatherRadar>(_onToggleRadar);
   }
   final WeatherService _service;
 
-  Future<void> _onFetchWeather(FetchWeatherForAirports event, Emitter<WeatherState> emit) async {
+  Future<void> _onFetchWeather(
+    FetchWeatherForAirports event,
+    Emitter<WeatherState> emit,
+  ) async {
     final currentState = state;
     var currentReports = <String, WeatherReport>{};
     var radarVisible = false;
@@ -24,8 +26,10 @@ class WeatherBloc extends Bloc<WeatherEvent, WeatherState> {
       radarVisible = currentState.isRadarVisible;
     }
 
-    final newIds = event.airportIds.where((id) => !currentReports.containsKey(id)).toList();
-    
+    final newIds = event.airportIds
+        .where((id) => !currentReports.containsKey(id))
+        .toList();
+
     if (newIds.isNotEmpty) {
       final newReports = await _service.getWeatherForAirports(newIds);
       for (final report in newReports) {

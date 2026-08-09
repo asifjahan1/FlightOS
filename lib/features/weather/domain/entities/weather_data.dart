@@ -1,15 +1,8 @@
 import 'package:equatable/equatable.dart';
 
-enum FlightCategory {
-  vfr,
-  mvfr,
-  ifr,
-  lifr,
-  unknown
-}
+enum FlightCategory { vfr, mvfr, ifr, lifr, unknown }
 
 class WeatherReport extends Equatable {
-
   const WeatherReport({
     required this.airportId,
     required this.rawMetar,
@@ -26,7 +19,7 @@ class WeatherReport extends Equatable {
   final String rawTaf;
   final FlightCategory category;
   final DateTime timestamp;
-  
+
   final double? tempC;
   final int? windDir;
   final int? windSpeed;
@@ -34,7 +27,14 @@ class WeatherReport extends Equatable {
 
   @override
   List<Object?> get props => [
-    airportId, rawMetar, rawTaf, category, timestamp,
-    tempC, windDir, windSpeed, cloudCover
+    airportId,
+    rawMetar,
+    rawTaf,
+    category,
+    timestamp,
+    tempC,
+    windDir,
+    windSpeed,
+    cloudCover,
   ];
 }

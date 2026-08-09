@@ -22,7 +22,7 @@ class FlightPlan extends Equatable {
   /// Computes the total distance of the route in Nautical Miles.
   double get totalDistanceNm {
     if (waypoints.length < 2) return 0;
-    
+
     var distance = 0.0;
     for (var i = 0; i < waypoints.length - 1; i++) {
       distance += NavMath.distanceNm(

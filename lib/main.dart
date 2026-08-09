@@ -28,7 +28,7 @@ Future<void> main() async {
     // Initialize Supabase
     await Supabase.initialize(
       url: dotenv.env['SUPABASE_URL'] ?? '',
-      publishableKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
+      anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
     );
 
     // Sign in anonymously if not already signed in (so we have an ID for tracking)

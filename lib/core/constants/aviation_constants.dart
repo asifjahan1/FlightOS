@@ -66,7 +66,8 @@ abstract final class Earth {
   static const double meanRadiusMeters = 6371008.8;
 
   /// Mean radius of the Earth in nautical miles.
-  static const double meanRadiusNm = meanRadiusMeters * AviationUnits.metersToNm;
+  static const double meanRadiusNm =
+      meanRadiusMeters * AviationUnits.metersToNm;
 
   /// Semi-major axis (equatorial radius) in meters (WGS-84).
   static const double semiMajorAxisMeters = 6378137;

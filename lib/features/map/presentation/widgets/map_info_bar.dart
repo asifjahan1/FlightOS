@@ -50,7 +50,10 @@ class MapInfoBar extends StatelessWidget {
             const SizedBox(width: 24),
 
             // ── Zoom Level ──
-            _InfoChip(icon: Icons.zoom_in, label: 'Z${zoom.toStringAsFixed(1)}'),
+            _InfoChip(
+              icon: Icons.zoom_in,
+              label: 'Z${zoom.toStringAsFixed(1)}',
+            ),
 
             if (activePlan != null && activePlan!.waypoints.length > 1) ...[
               const SizedBox(width: 24),
@@ -128,14 +131,22 @@ class MapInfoBar extends StatelessWidget {
 
             // ── Actions ──
             IconButton(
-              icon: const Icon(Icons.check_box, color: Colors.white70, size: 18),
+              icon: const Icon(
+                Icons.check_box,
+                color: Colors.white70,
+                size: 18,
+              ),
               tooltip: 'Checklist',
               onPressed: () {
                 context.read<ChecklistBloc>().add(ToggleChecklistPanel());
               },
             ),
             IconButton(
-              icon: const Icon(Icons.edit_note, color: Colors.white70, size: 18),
+              icon: const Icon(
+                Icons.edit_note,
+                color: Colors.white70,
+                size: 18,
+              ),
               tooltip: 'Scratchpad',
               onPressed: () {
                 context.read<ScratchpadBloc>().add(ToggleScratchpad());

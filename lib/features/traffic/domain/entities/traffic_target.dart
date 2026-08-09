@@ -55,12 +55,12 @@ class TrafficTarget extends Equatable {
 
   @override
   List<Object?> get props => [
-        icaoHex,
-        latitude,
-        longitude,
-        altitudeFeet,
-        groundSpeedKnots,
-        trackDegrees,
-        callsign,
-      ];
+    icaoHex,
+    latitude,
+    longitude,
+    altitudeFeet,
+    groundSpeedKnots,
+    trackDegrees,
+    callsign,
+  ];
 }

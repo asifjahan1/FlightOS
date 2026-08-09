@@ -16,20 +16,32 @@ class AircraftDetailsSheet extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Flight \${target.callsign ?? 'Unknown'}",
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              r"Flight ${target.callsign ?? 'Unknown'}",
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            Text('ICAO Hex: \${target.icaoHex}'),
+            const Text(r'ICAO Hex: ${target.icaoHex}'),
             const Divider(),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildInfoCol(context, 'Altitude', '\${target.altitudeFeet.round()} ft'),
-                _buildInfoCol(context, 'Speed', '\${target.groundSpeedKnots.round()} kts'),
-                _buildInfoCol(context, 'Heading', '\${target.trackDegrees.round()}°'),
+                _buildInfoCol(
+                  context,
+                  'Altitude',
+                  r'${target.altitudeFeet.round()} ft',
+                ),
+                _buildInfoCol(
+                  context,
+                  'Speed',
+                  r'${target.groundSpeedKnots.round()} kts',
+                ),
+                _buildInfoCol(
+                  context,
+                  'Heading',
+                  r'${target.trackDegrees.round()}°',
+                ),
               ],
             ),
             const SizedBox(height: 16),
@@ -51,16 +63,16 @@ class AircraftDetailsSheet extends StatelessWidget {
       children: [
         Text(
           label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Colors.grey,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: Colors.grey),
         ),
         const SizedBox(height: 4),
         Text(
           value,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
       ],
     );

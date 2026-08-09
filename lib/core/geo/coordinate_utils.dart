@@ -12,10 +12,9 @@ abstract final class CoordinateUtils {
   ///
   /// Example: `toDms(40.6413, isLatitude: true)` → `"N 40° 38' 28.68""`
   static String toDms(double decimal, {required bool isLatitude}) {
-    final direction =
-        isLatitude
-            ? (decimal >= 0 ? 'N' : 'S')
-            : (decimal >= 0 ? 'E' : 'W');
+    final direction = isLatitude
+        ? (decimal >= 0 ? 'N' : 'S')
+        : (decimal >= 0 ? 'E' : 'W');
 
     final abs = decimal.abs();
     final degrees = abs.floor();

@@ -34,30 +34,38 @@ class _FleetLayerState extends State<FleetLayer> {
         }
 
         final targets = snapshot.data!;
-        
+
         final polylines = <Polyline>[];
         final markers = <Marker>[];
 
         for (final target in targets) {
           // If the location is older than 5 minutes, consider it stale (faded)
-          final isStale = DateTime.now().difference(target.updatedAt).inMinutes > 5;
+          final isStale =
+              DateTime.now().difference(target.updatedAt).inMinutes > 5;
           final opacity = isStale ? 0.4 : 1.0;
 
-          if (target.destinationLatitude != null && target.destinationLongitude != null) {
+          if (target.destinationLatitude != null &&
+              target.destinationLongitude != null) {
             polylines.add(
               Polyline(
                 points: [
                   LatLng(target.latitude, target.longitude),
-                  LatLng(target.destinationLatitude!, target.destinationLongitude!),
+                  LatLng(
+                    target.destinationLatitude!,
+                    target.destinationLongitude!,
+                  ),
                 ],
                 color: Colors.deepOrangeAccent.withValues(alpha: opacity),
                 strokeWidth: 4,
               ),
             );
-            
+
             markers.add(
               Marker(
-                point: LatLng(target.destinationLatitude!, target.destinationLongitude!),
+                point: LatLng(
+                  target.destinationLatitude!,
+                  target.destinationLongitude!,
+                ),
                 width: 32,
                 height: 32,
                 child: Opacity(

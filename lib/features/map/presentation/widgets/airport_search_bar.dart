@@ -6,9 +6,10 @@ import 'package:latlong2/latlong.dart';
 import 'package:skynav/core/theme/app_theme.dart';
 import 'package:skynav/features/airport/domain/entities/airport.dart';
 import 'package:skynav/features/airport/domain/repositories/airport_repository.dart';
+import 'package:skynav/features/airport/presentation/widgets/airport_details_panel.dart'
+    as skynav_panels;
 import 'package:skynav/features/telemetry/presentation/bloc/telemetry_bloc.dart';
 import 'package:skynav/injection.dart';
-import 'package:skynav/features/airport/presentation/widgets/airport_details_panel.dart' as skynav_panels;
 
 class AirportSearchBar extends StatefulWidget {
   const AirportSearchBar({super.key});
@@ -57,9 +58,7 @@ class _AirportSearchBarState extends State<AirportSearchBar> {
     });
 
     context.read<TelemetryBloc>().add(
-      TelemetryDestinationSet(
-        LatLng(airport.latitude, airport.longitude),
-      ),
+      TelemetryDestinationSet(LatLng(airport.latitude, airport.longitude)),
     );
 
     showModalBottomSheet(
@@ -98,10 +97,17 @@ class _AirportSearchBarState extends State<AirportSearchBar> {
             decoration: InputDecoration(
               hintText: 'Search Airports...',
               hintStyle: const TextStyle(color: AppTheme.textSecondary),
-              prefixIcon: const Icon(Icons.search, color: AppTheme.accentPrimary),
+              prefixIcon: const Icon(
+                Icons.search,
+                color: AppTheme.accentPrimary,
+              ),
               suffixIcon: _controller.text.isNotEmpty
                   ? IconButton(
-                      icon: const Icon(Icons.clear, color: AppTheme.textSecondary, size: 18),
+                      icon: const Icon(
+                        Icons.clear,
+                        color: AppTheme.textSecondary,
+                        size: 18,
+                      ),
                       onPressed: () {
                         _controller.clear();
                         setState(() {
@@ -113,7 +119,10 @@ class _AirportSearchBarState extends State<AirportSearchBar> {
                   : null,
               filled: true,
               fillColor: AppTheme.backgroundSecondary.withValues(alpha: 0.9),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
                 borderSide: const BorderSide(color: AppTheme.border),
@@ -139,7 +148,11 @@ class _AirportSearchBarState extends State<AirportSearchBar> {
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: AppTheme.border),
                 boxShadow: const [
-                  BoxShadow(color: Color(0x60000000), blurRadius: 8, offset: Offset(0, 4)),
+                  BoxShadow(
+                    color: Color(0x60000000),
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  ),
                 ],
               ),
               child: Material(
@@ -148,7 +161,7 @@ class _AirportSearchBarState extends State<AirportSearchBar> {
                   padding: EdgeInsets.zero,
                   shrinkWrap: true,
                   itemCount: _results.length,
-                  separatorBuilder: (_, __) =>
+                  separatorBuilder: (_, _) =>
                       const Divider(height: 1, color: AppTheme.border),
                   itemBuilder: (context, index) {
                     final airport = _results[index];
