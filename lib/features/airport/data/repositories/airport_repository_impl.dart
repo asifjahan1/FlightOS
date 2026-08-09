@@ -8,7 +8,6 @@ import 'package:skynav/features/airport/domain/repositories/airport_repository.d
 
 @LazySingleton(as: AirportRepository)
 class AirportRepositoryImpl implements AirportRepository {
-
   AirportRepositoryImpl(AppDatabase db) : _dao = db.airportDao;
   final AirportDao _dao;
 

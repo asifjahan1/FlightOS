@@ -121,12 +121,15 @@ class OpenSkyTrafficService implements TrafficService {
     // Fast timer to smoothly animate planes between network updates (Dead Reckoning)
     _animationTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_targets.isEmpty) return;
-      
+
       final updated = <TrafficTarget>[];
       for (final target in _targets) {
-        final distMeters = (target.groundSpeedKnots / 1.94384) * 1.0; 
-        final latOffset = (distMeters * math.cos(target.trackDegrees * math.pi / 180)) / 111320.0;
-        final lonOffset = (distMeters * math.sin(target.trackDegrees * math.pi / 180)) /
+        final distMeters = (target.groundSpeedKnots / 1.94384) * 1.0;
+        final latOffset =
+            (distMeters * math.cos(target.trackDegrees * math.pi / 180)) /
+            111320.0;
+        final lonOffset =
+            (distMeters * math.sin(target.trackDegrees * math.pi / 180)) /
             (111320.0 * math.cos(target.latitude * math.pi / 180));
 
         updated.add(

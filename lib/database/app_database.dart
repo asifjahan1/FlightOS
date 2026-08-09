@@ -128,7 +128,10 @@ LazyDatabase _openConnection() {
         // But since this is a desktop app, assets might be in a different path.
         // Actually, flutter exposes assets via rootBundle.load.
         final assetData = await rootBundle.load('assets/data/airports.sqlite');
-        final bytes = assetData.buffer.asUint8List(assetData.offsetInBytes, assetData.lengthInBytes);
+        final bytes = assetData.buffer.asUint8List(
+          assetData.offsetInBytes,
+          assetData.lengthInBytes,
+        );
         await dbFile.writeAsBytes(bytes, flush: true);
       } catch (e) {
         // Fallback: just let drift create an empty DB

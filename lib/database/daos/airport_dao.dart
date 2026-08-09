@@ -31,16 +31,15 @@ class AirportDao extends DatabaseAccessor<AppDatabase> with _$AirportDaoMixin {
     List<String>? types,
   }) {
     return (select(airportTable)
-          ..where(
-            (a) {
-              var condition = a.latitude.isBetweenValues(minLat, maxLat) &
-                              a.longitude.isBetweenValues(minLon, maxLon);
-              if (types != null && types.isNotEmpty) {
-                condition = condition & a.type.isIn(types);
-              }
-              return condition;
-            },
-          )
+          ..where((a) {
+            var condition =
+                a.latitude.isBetweenValues(minLat, maxLat) &
+                a.longitude.isBetweenValues(minLon, maxLon);
+            if (types != null && types.isNotEmpty) {
+              condition = condition & a.type.isIn(types);
+            }
+            return condition;
+          })
           ..limit(limit))
         .get();
   }
@@ -63,8 +62,9 @@ class AirportDao extends DatabaseAccessor<AppDatabase> with _$AirportDaoMixin {
 
   /// Returns a single airport by internal ID.
   Future<AirportEntry?> getById(int id) {
-    return (select(airportTable)..where((a) => a.id.equals(id)))
-        .getSingleOrNull();
+    return (select(
+      airportTable,
+    )..where((a) => a.id.equals(id))).getSingleOrNull();
   }
 
   /// Searches airports by name or code using LIKE.
@@ -84,8 +84,7 @@ class AirportDao extends DatabaseAccessor<AppDatabase> with _$AirportDaoMixin {
           ..orderBy([
             // Prefer exact code matches first
             (a) => OrderingTerm(
-              expression: a.icaoCode.like(query) |
-                  a.faaCode.like(query),
+              expression: a.icaoCode.like(query) | a.faaCode.like(query),
               mode: OrderingMode.desc,
             ),
           ])
@@ -175,9 +174,7 @@ class AirportDao extends DatabaseAccessor<AppDatabase> with _$AirportDaoMixin {
   }
 
   /// Inserts a batch of navaids in a transaction.
-  Future<void> insertNavaidsBatch(
-    List<NavaidTableCompanion> navaids,
-  ) async {
+  Future<void> insertNavaidsBatch(List<NavaidTableCompanion> navaids) async {
     await batch((batch) {
       batch.insertAll(navaidTable, navaids);
     });

@@ -22,10 +22,7 @@ class DatabaseException extends AppException {
 
 /// Thrown when a required file cannot be read or is corrupted.
 class FileSystemException extends AppException {
-  const FileSystemException({
-    super.message = 'File system error',
-    super.cause,
-  });
+  const FileSystemException({super.message = 'File system error', super.cause});
 }
 
 /// Thrown when map tile data cannot be read or decoded.

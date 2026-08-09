@@ -1,6 +1,7 @@
 library;
 
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:skynav/core/constants/api_constants.dart';
 
@@ -10,24 +11,27 @@ class OverpassApiClient {
   Future<List<String>> fetchAirportFacilities(double lat, double lon) async {
     try {
       // Query amenities like restaurants, cafes, fuel within 2000m radius of the airport center
-      final query = '''
+      final query = r'''
       [out:json][timeout:10];
       (
-        node["amenity"~"restaurant|cafe|fast_food|fuel|car_rental"](around:2000,\$lat,\$lon);
-        way["amenity"~"restaurant|cafe|fast_food|fuel|car_rental"](around:2000,\$lat,\$lon);
+        node["amenity"~"restaurant|cafe|fast_food|fuel|car_rental"](around:2000,$lat,$lon);
+        way["amenity"~"restaurant|cafe|fast_food|fuel|car_rental"](around:2000,$lat,$lon);
       );
       out tags;
       ''';
 
       final url = Uri.parse(ApiConstants.overpassApiEndpoint);
-      final response = await http.post(
-        url,
-        body: query,
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-      ).timeout(const Duration(seconds: 10));
+      final response = await http
+          .post(
+            url,
+            body: query,
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        // ignore: avoid_dynamic_calls
         final elements = data['elements'] as List<dynamic>?;
         if (elements == null) return [];
 
@@ -38,8 +42,12 @@ class OverpassApiClient {
             final amenity = tags['amenity']?.toString();
             final name = tags['name']?.toString();
             if (amenity != null) {
-              final formattedAmenity = amenity.replaceAll('_', ' ').toUpperCase();
-              facilities.add(name != null ? '\$name (\$formattedAmenity)' : formattedAmenity);
+              final formattedAmenity = amenity
+                  .replaceAll('_', ' ')
+                  .toUpperCase();
+              facilities.add(
+                name != null ? r'$name ($formattedAmenity)' : formattedAmenity,
+              );
             }
           }
         }
@@ -47,7 +55,9 @@ class OverpassApiClient {
       }
       return [];
     } catch (e) {
-      print('Failed to fetch facilities from Overpass: \$e');
+      if (kDebugMode) {
+        print(r'Failed to fetch facilities from Overpass: $e');
+      }
       return [];
     }
   }
