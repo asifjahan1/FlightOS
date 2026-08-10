@@ -78,6 +78,26 @@ class SyntheticVisionPage extends StatelessWidget {
           const Positioned.fill(
             child: _HudOverlay(),
           ),
+          
+          // Waiting for GPS Warning
+          BlocBuilder<TelemetryBloc, TelemetryState>(
+            builder: (context, state) {
+              if (state is! TelemetryActive) {
+                 return const Center(
+                   child: Text(
+                     'WAITING FOR GPS/AHRS',
+                     style: TextStyle(
+                       color: Colors.red,
+                       fontSize: 24,
+                       fontWeight: FontWeight.bold,
+                       backgroundColor: Colors.black54,
+                     ),
+                   ),
+                 );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
         ],
       ),
     );
@@ -91,11 +111,15 @@ class _HudOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<TelemetryBloc, TelemetryState>(
       builder: (context, state) {
-        if (state is! TelemetryActive) {
-           return const Center(child: Text('WAITING FOR GPS/AHRS', style: TextStyle(color: Colors.red, fontSize: 24, fontWeight: FontWeight.bold)));
-        }
+        double altitude = 0;
+        double speed = 0;
+        double heading = 0;
         
-        final data = state.data;
+        if (state is TelemetryActive) {
+          altitude = state.data.altitudeMslFeet;
+          speed = state.data.groundSpeedKnots;
+          heading = state.data.trueTrack;
+        }
         
         return Stack(
           children: [
@@ -111,7 +135,7 @@ class _HudOverlay extends StatelessWidget {
                   color: Colors.black45,
                   alignment: Alignment.center,
                   child: Text(
-                    '${data.altitudeMslFeet.round()}\nFT',
+                    '${altitude.round()}\nFT',
                     style: const TextStyle(color: Colors.greenAccent, fontSize: 18, fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
@@ -131,7 +155,7 @@ class _HudOverlay extends StatelessWidget {
                   color: Colors.black45,
                   alignment: Alignment.center,
                   child: Text(
-                    '${data.groundSpeedKnots.round()}\nKT',
+                    '${speed.round()}\nKT',
                     style: const TextStyle(color: Colors.greenAccent, fontSize: 18, fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
@@ -151,7 +175,7 @@ class _HudOverlay extends StatelessWidget {
                   color: Colors.black45,
                   alignment: Alignment.center,
                   child: Text(
-                    'HDG ${data.trueTrack.round().toString().padLeft(3, '0')}°',
+                    'HDG ${heading.round().toString().padLeft(3, '0')}°',
                     style: const TextStyle(color: Colors.greenAccent, fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                 ),

@@ -305,20 +305,36 @@ class _MapReadyViewState extends State<_MapReadyView> {
                     maxZoom: MapConstants.maxZoom,
                     backgroundColor: const Color(0xFF0D1117),
                     onMapReady: () {
-                      final camera = widget.mapController.camera;
-                      final bounds = camera.visibleBounds;
-                      if (context.mounted) {
-                        context.read<MapBloc>().add(
-                          MapMoved(
-                            center: camera.center,
-                            zoom: camera.zoom,
-                            bounds: MapBounds(
-                              southWest: bounds.southWest,
-                              northEast: bounds.northEast,
-                            ),
-                          ),
-                        );
-                      }
+                      // Delayed dispatch avoids the zero-bounds bug where
+                      // the camera hasn't finished layout yet on Android.
+                      Future<void>.delayed(
+                        const Duration(milliseconds: 500),
+                        () {
+                          if (!context.mounted) return;
+                          final camera = widget.mapController.camera;
+                          final bounds = camera.visibleBounds;
+                          // Only dispatch if the bounds are reasonable
+                          // (not zero-sized from an incomplete layout).
+                          final latSpan = (bounds.northEast.latitude -
+                                  bounds.southWest.latitude)
+                              .abs();
+                          final lonSpan = (bounds.northEast.longitude -
+                                  bounds.southWest.longitude)
+                              .abs();
+                          if (latSpan > 0.1 && lonSpan > 0.1) {
+                            context.read<MapBloc>().add(
+                              MapMoved(
+                                center: camera.center,
+                                zoom: camera.zoom,
+                                bounds: MapBounds(
+                                  southWest: bounds.southWest,
+                                  northEast: bounds.northEast,
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                      );
                     },
                     onMapEvent: (event) {
                       if (event is MapEventMoveEnd) {

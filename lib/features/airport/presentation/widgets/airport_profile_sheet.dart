@@ -4,7 +4,7 @@ import 'package:skynav/core/theme/app_theme.dart';
 import 'package:skynav/features/airport/domain/entities/airport.dart';
 import 'package:skynav/features/flight_plan/domain/entities/waypoint.dart';
 import 'package:skynav/features/flight_plan/presentation/bloc/flight_plan_bloc.dart';
-import 'package:skynav/features/weather/domain/entities/weather_data.dart';
+// import 'package:skynav/features/weather/domain/entities/weather_data.dart';
 import 'package:skynav/features/weather/presentation/bloc/weather_bloc.dart';
 import 'package:skynav/features/weather/presentation/bloc/weather_state.dart';
 
@@ -15,7 +15,7 @@ class AirportProfileSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
+    return Container(
       decoration: const BoxDecoration(
         color: AppTheme.backgroundPrimary,
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
@@ -54,16 +54,16 @@ class AirportProfileSheet extends StatelessWidget {
                         children: [
                           Text(
                             airport.icao,
-                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.textPrimary,
-                            ),
+                            style: Theme.of(context).textTheme.headlineMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.textPrimary,
+                                ),
                           ),
                           Text(
                             airport.name,
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: AppTheme.textSecondary,
-                            ),
+                            style: Theme.of(context).textTheme.bodyLarge
+                                ?.copyWith(color: AppTheme.textSecondary),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -71,16 +71,22 @@ class AirportProfileSheet extends StatelessWidget {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close, color: AppTheme.textSecondary),
+                      icon: const Icon(
+                        Icons.close,
+                        color: AppTheme.textSecondary,
+                      ),
                       onPressed: () => Navigator.of(context).pop(),
                     ),
                   ],
                 ),
               ),
-              
+
               // Actions (Add to Route, Direct To)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 child: Row(
                   children: [
                     Expanded(
@@ -101,7 +107,9 @@ class AirportProfileSheet extends StatelessWidget {
                           context.read<FlightPlanBloc>().add(WaypointAdded(wp));
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Added ${airport.icao} to route')),
+                            SnackBar(
+                              content: Text('Added ${airport.icao} to route'),
+                            ),
                           );
                         },
                       ),
@@ -122,10 +130,14 @@ class AirportProfileSheet extends StatelessWidget {
                             name: airport.icao,
                             elevation: airport.elevation,
                           );
-                          context.read<FlightPlanBloc>().add(DestinationSet(wp));
+                          context.read<FlightPlanBloc>().add(
+                            DestinationSet(wp),
+                          );
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Direct-To ${airport.icao}')),
+                            SnackBar(
+                              content: Text('Direct-To ${airport.icao}'),
+                            ),
                           );
                         },
                       ),
@@ -149,10 +161,19 @@ class AirportProfileSheet extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    _InfoRow(label: 'Elevation', value: '${airport.elevation.round()} ft MSL'),
-                    if (airport.iata != null) _InfoRow(label: 'IATA', value: airport.iata!),
-                    if (airport.municipality != null) _InfoRow(label: 'City', value: airport.municipality!),
-                    _InfoRow(label: 'Coordinates', value: '${airport.latitude.toStringAsFixed(4)}, ${airport.longitude.toStringAsFixed(4)}'),
+                    _InfoRow(
+                      label: 'Elevation',
+                      value: '${airport.elevation.round()} ft MSL',
+                    ),
+                    if (airport.iata != null)
+                      _InfoRow(label: 'IATA', value: airport.iata!),
+                    if (airport.municipality != null)
+                      _InfoRow(label: 'City', value: airport.municipality!),
+                    _InfoRow(
+                      label: 'Coordinates',
+                      value:
+                          '${airport.latitude.toStringAsFixed(4)}, ${airport.longitude.toStringAsFixed(4)}',
+                    ),
                   ],
                 ),
               ),
@@ -180,9 +201,20 @@ class AirportProfileSheet extends StatelessWidget {
                             return Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                _InfoRow(label: 'Flight Category', value: report.category.name.toUpperCase()),
-                                if (report.tempC != null) _InfoRow(label: 'Temperature', value: '${report.tempC!.round()}°C'),
-                                if (report.windSpeed != null) _InfoRow(label: 'Wind', value: '${report.windSpeed}kt'),
+                                _InfoRow(
+                                  label: 'Flight Category',
+                                  value: report.category.name.toUpperCase(),
+                                ),
+                                if (report.tempC != null)
+                                  _InfoRow(
+                                    label: 'Temperature',
+                                    value: '${report.tempC!.round()}°C',
+                                  ),
+                                if (report.windSpeed != null)
+                                  _InfoRow(
+                                    label: 'Wind',
+                                    value: '${report.windSpeed}kt',
+                                  ),
                                 const SizedBox(height: 8),
                                 Text(
                                   report.rawMetar,
@@ -195,7 +227,10 @@ class AirportProfileSheet extends StatelessWidget {
                               ],
                             );
                           } else {
-                            return const Text('No weather data available.', style: TextStyle(color: AppTheme.textSecondary));
+                            return const Text(
+                              'No weather data available.',
+                              style: TextStyle(color: AppTheme.textSecondary),
+                            );
                           }
                         }
                         return const Center(child: CircularProgressIndicator());
@@ -222,12 +257,15 @@ class AirportProfileSheet extends StatelessWidget {
                     const SizedBox(height: 8),
                     const Text(
                       'Detailed runway and frequency data requires a premium aviation data subscription.',
-                      style: TextStyle(color: AppTheme.textSecondary, fontStyle: FontStyle.italic),
+                      style: TextStyle(
+                        color: AppTheme.textSecondary,
+                        fontStyle: FontStyle.italic,
+                      ),
                     ),
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 24),
             ],
           ),
@@ -253,7 +291,10 @@ class _InfoRow extends StatelessWidget {
             width: 100,
             child: Text(
               label,
-              style: const TextStyle(color: AppTheme.textTertiary, fontWeight: FontWeight.w500),
+              style: const TextStyle(
+                color: AppTheme.textTertiary,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
           Expanded(

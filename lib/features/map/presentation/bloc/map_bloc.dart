@@ -227,17 +227,22 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         southWest: const LatLng(24.0, -125.0),
         northEast: const LatLng(50.0, -66.0),
       );
-      List<Airport> initialAirports = [];
-      try {
-        initialAirports = await _airportRepository.getAirportsInBoundingBox(
-          minLat: defaultBounds.southWest.latitude,
-          maxLat: defaultBounds.northEast.latitude,
-          minLon: defaultBounds.southWest.longitude,
-          maxLon: defaultBounds.northEast.longitude,
-          // At default zoom (~5) only show large airports to avoid clutter
-          types: ['large_airport'],
-        );
-      } catch (_) {}
+      List<Airport> initialAirports = await _fetchInitialAirports(
+        defaultBounds,
+      );
+
+      // If the database returned 0 airports, it might be because
+      // NativeDatabase.createInBackground hasn't finished yet on Android.
+      // Retry once after a short delay.
+      if (initialAirports.isEmpty) {
+        // ignore: avoid_print
+        print('[MapBloc] 0 airports on first try, retrying in 2s...');
+        await Future<void>.delayed(const Duration(seconds: 2));
+        initialAirports = await _fetchInitialAirports(defaultBounds);
+      }
+
+      // ignore: avoid_print
+      print('[MapBloc] Final initial airports: ${initialAirports.length}');
 
       emit(
         MapReady(
@@ -251,6 +256,27 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       );
     } on Exception catch (e) {
       emit(MapError(message: 'Failed to initialize map: $e'));
+    }
+  }
+
+  Future<List<Airport>> _fetchInitialAirports(MapBounds bounds) async {
+    try {
+      final airports = await _airportRepository.getAirportsInBoundingBox(
+        minLat: bounds.southWest.latitude,
+        maxLat: bounds.northEast.latitude,
+        minLon: bounds.southWest.longitude,
+        maxLon: bounds.northEast.longitude,
+        types: ['large_airport'],
+      );
+      // ignore: avoid_print
+      print(
+        '[MapBloc] _fetchInitialAirports: ${airports.length} large airports',
+      );
+      return airports;
+    } catch (e) {
+      // ignore: avoid_print
+      print('[MapBloc] ERROR _fetchInitialAirports: $e');
+      return [];
     }
   }
 
@@ -284,8 +310,19 @@ class MapBloc extends Bloc<MapEvent, MapState> {
             maxLon: event.bounds.northEast.longitude,
             types: typesFilter,
           );
-        } catch (_) {
-          // Ignore fetch errors for now
+          // ignore: avoid_print
+          print(
+            '[MapBloc] _onMoved: zoom=${event.zoom.toStringAsFixed(1)}, '
+            'bounds=(${event.bounds.southWest.latitude.toStringAsFixed(2)}, '
+            '${event.bounds.southWest.longitude.toStringAsFixed(2)}) to '
+            '(${event.bounds.northEast.latitude.toStringAsFixed(2)}, '
+            '${event.bounds.northEast.longitude.toStringAsFixed(2)}), '
+            'typesFilter=$typesFilter, '
+            'result=${newAirports.length} airports',
+          );
+        } catch (e) {
+          // ignore: avoid_print
+          print('[MapBloc] ERROR in _onMoved airport fetch: $e');
         }
       }
 
