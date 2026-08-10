@@ -15,14 +15,19 @@ import 'package:latlong2/latlong.dart';
 import 'package:skynav/core/constants/map_constants.dart';
 import 'package:skynav/core/theme/app_theme.dart';
 import 'package:skynav/core/utils/nav_math.dart';
+import 'package:skynav/core/utils/responsive_layout.dart';
 import 'package:skynav/features/airspace/presentation/bloc/airspace_bloc.dart';
 import 'package:skynav/features/airspace/presentation/bloc/airspace_event.dart';
 import 'package:skynav/features/airspace/presentation/bloc/airspace_state.dart';
+import 'package:skynav/features/airport/presentation/widgets/airport_profile_sheet.dart';
 import 'package:skynav/features/checklist/presentation/widgets/checklist_panel.dart';
+import 'package:skynav/features/airport/presentation/widgets/nearest_airports_panel.dart';
 import 'package:skynav/features/flight_plan/domain/entities/waypoint.dart';
 import 'package:skynav/features/flight_plan/presentation/bloc/flight_plan_bloc.dart';
+import 'package:skynav/features/flight_plan/presentation/widgets/route_panel.dart';
 import 'package:skynav/features/map/presentation/bloc/map_bloc.dart';
 import 'package:skynav/features/map/presentation/widgets/airport_search_bar.dart';
+import 'package:skynav/features/terrain/presentation/pages/synthetic_vision_page.dart';
 import 'package:skynav/features/traffic/presentation/widgets/aircraft_details_sheet.dart'
     as skynav_details;
 import 'package:skynav/features/map/presentation/widgets/map_controls.dart';
@@ -271,9 +276,12 @@ class _MapReadyView extends StatefulWidget {
 
 class _MapReadyViewState extends State<_MapReadyView> {
   bool _isDrawMode = false;
+  bool _isEmergencyMode = false;
 
   @override
   Widget build(BuildContext context) {
+    final isPhone = ResponsiveLayout.isPhone(context);
+    
     return Stack(
       children: [
         // ── Main FlutterMap ──
@@ -297,20 +305,36 @@ class _MapReadyViewState extends State<_MapReadyView> {
                     maxZoom: MapConstants.maxZoom,
                     backgroundColor: const Color(0xFF0D1117),
                     onMapReady: () {
-                      final camera = widget.mapController.camera;
-                      final bounds = camera.visibleBounds;
-                      if (context.mounted) {
-                        context.read<MapBloc>().add(
-                          MapMoved(
-                            center: camera.center,
-                            zoom: camera.zoom,
-                            bounds: MapBounds(
-                              southWest: bounds.southWest,
-                              northEast: bounds.northEast,
-                            ),
-                          ),
-                        );
-                      }
+                      // Delayed dispatch avoids the zero-bounds bug where
+                      // the camera hasn't finished layout yet on Android.
+                      Future<void>.delayed(
+                        const Duration(milliseconds: 500),
+                        () {
+                          if (!context.mounted) return;
+                          final camera = widget.mapController.camera;
+                          final bounds = camera.visibleBounds;
+                          // Only dispatch if the bounds are reasonable
+                          // (not zero-sized from an incomplete layout).
+                          final latSpan = (bounds.northEast.latitude -
+                                  bounds.southWest.latitude)
+                              .abs();
+                          final lonSpan = (bounds.northEast.longitude -
+                                  bounds.southWest.longitude)
+                              .abs();
+                          if (latSpan > 0.1 && lonSpan > 0.1) {
+                            context.read<MapBloc>().add(
+                              MapMoved(
+                                center: camera.center,
+                                zoom: camera.zoom,
+                                bounds: MapBounds(
+                                  southWest: bounds.southWest,
+                                  northEast: bounds.northEast,
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                      );
                     },
                     onMapEvent: (event) {
                       if (event is MapEventMoveEnd) {
@@ -484,65 +508,11 @@ class _MapReadyViewState extends State<_MapReadyView> {
                             height: 32,
                             child: GestureDetector(
                               onTap: () {
-                                final waypoint = Waypoint(
-                                  latitude: airport.latitude,
-                                  longitude: airport.longitude,
-                                  name: airport.icao,
-                                  elevation: airport.elevation,
-                                );
                                 showModalBottomSheet(
                                   context: context,
-                                  builder: (ctx) => SafeArea(
-                                    child: Wrap(
-                                      children: [
-                                        ListTile(
-                                          leading: const Icon(
-                                            Icons.add_location_alt,
-                                          ),
-                                          title: const Text('Add to Route'),
-                                          onTap: () {
-                                            Navigator.pop(ctx);
-                                            context.read<FlightPlanBloc>().add(
-                                              WaypointAdded(waypoint),
-                                            );
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              SnackBar(
-                                                content: Text(
-                                                  'Added ${airport.icao} to route',
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                        ListTile(
-                                          leading: const Icon(
-                                            Icons.flight_takeoff,
-                                            color: Color(0xFF00FFFF),
-                                          ),
-                                          title: const Text(
-                                            'Direct-To (Set Destination)',
-                                          ),
-                                          onTap: () {
-                                            Navigator.pop(ctx);
-                                            context.read<FlightPlanBloc>().add(
-                                              DestinationSet(waypoint),
-                                            );
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              SnackBar(
-                                                content: Text(
-                                                  'Direct-To ${airport.icao} set',
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                  ),
+                                  isScrollControlled: true,
+                                  backgroundColor: Colors.transparent,
+                                  builder: (ctx) => AirportProfileSheet(airport: airport),
                                 );
                               },
                               child: DecoratedBox(
@@ -966,6 +936,19 @@ class _MapReadyViewState extends State<_MapReadyView> {
                     _isDrawMode = !_isDrawMode;
                   });
                 },
+                isEmergencyMode: _isEmergencyMode,
+                onEmergencyModeToggle: () {
+                  setState(() {
+                    _isEmergencyMode = !_isEmergencyMode;
+                  });
+                },
+                on3DToggle: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const SyntheticVisionPage(),
+                    ),
+                  );
+                },
                 onClearRoute: () {
                   context.read<FlightPlanBloc>().add(const FlightPlanCleared());
                 },
@@ -1043,15 +1026,16 @@ class _MapReadyViewState extends State<_MapReadyView> {
         ),
 
         // ── Floating Panels ──
-        const Positioned(
-          top: 60,
-          right: 0,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [ScratchpadPanel(), ChecklistPanel()],
+        if (!isPhone)
+          const Positioned(
+            top: 60,
+            right: 0,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [ScratchpadPanel(), ChecklistPanel()],
+            ),
           ),
-        ),
 
         // ── Bottom Panel (Telemetry) ──
         Positioned(
@@ -1113,8 +1097,19 @@ class _MapReadyViewState extends State<_MapReadyView> {
           ),
         ),
 
+        // ── Route Panel (top-left) ──
+        const Positioned(
+          top: 80,
+          left: 0,
+          child: SizedBox(
+            width: 320,
+            child: RoutePanel(),
+          ),
+        ),
+
         // ── Telemetry Panel (left-center) ──
-        const Positioned(left: 16, top: 80, child: TelemetryPanel()),
+        if (!isPhone)
+          const Positioned(left: 16, top: 80, child: TelemetryPanel()),
 
         // ── Airspace Alert Banner ──
         BlocBuilder<AirspaceBloc, AirspaceState>(

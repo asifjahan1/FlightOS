@@ -1,6 +1,7 @@
 import 'package:injectable/injectable.dart';
 import 'package:skynav/core/database/daos/airport_dao.dart';
 import 'package:skynav/core/database/database.dart';
+import 'package:skynav/core/utils/nav_math.dart';
 import 'package:skynav/features/airport/domain/entities/airport.dart';
 import 'package:skynav/features/airport/domain/entities/frequency.dart';
 import 'package:skynav/features/airport/domain/entities/runway.dart';
@@ -34,6 +35,26 @@ class AirportRepositoryImpl implements AirportRepository {
       types: types,
     );
     return list.map(_mapAirport).toList();
+  }
+
+  @override
+  Future<List<Airport>> getNearestAirports(double lat, double lon, int limit) async {
+    final boxSize = 1.0; // roughly 60nm
+    final list = await _dao.getAirportsInBoundingBox(
+      minLat: lat - boxSize,
+      maxLat: lat + boxSize,
+      minLon: lon - boxSize,
+      maxLon: lon + boxSize,
+    );
+    
+    final mapped = list.map(_mapAirport).toList();
+    mapped.sort((a, b) {
+       final distA = NavMath.distanceNm(lat, lon, a.latitude, a.longitude);
+       final distB = NavMath.distanceNm(lat, lon, b.latitude, b.longitude);
+       return distA.compareTo(distB);
+    });
+    
+    return mapped.take(limit).toList();
   }
 
   @override

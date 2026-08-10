@@ -18,31 +18,17 @@ Future<void> main() async {
   // ignore: prefer_single_quotes, avoid_redundant_argument_values
   await dotenv.load(fileName: '.env');
 
-  // Enforce landscape mode for mobile devices
+  // Allow all orientations on mobile devices
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.landscapeRight,
     DeviceOrientation.landscapeLeft,
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
   ]);
 
-  try {
-    // Initialize Supabase
-    await Supabase.initialize(
-      url: dotenv.env['SUPABASE_URL'] ?? '',
-      anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
-    );
-
-    // Sign in anonymously if not already signed in (so we have an ID for tracking)
-    final supabase = Supabase.instance.client;
-    if (supabase.auth.currentSession == null) {
-      try {
-        await supabase.auth.signInAnonymously();
-      } catch (e) {
-        debugPrint('Supabase anonymous sign in failed: $e');
-      }
-    }
-  } catch (e) {
-    debugPrint('Supabase initialization or sign-in failed: $e');
-  }
+  // Supabase init is non-blocking on Android to avoid slow splash screen.
+  // It runs in the background — features that need it will wait.
+  _initSupabaseInBackground();
 
   setupSqliteDatabase();
 
@@ -90,6 +76,30 @@ Future<void> main() async {
       }
     } catch (e) {
       debugPrint('WARNING: Could not maximize window: $e');
+    }
+  });
+}
+
+/// Initialize Supabase in the background so it doesn't block app startup.
+/// On Android with slow/no network, this can take several seconds.
+void _initSupabaseInBackground() {
+  Future<void>(() async {
+    try {
+      await Supabase.initialize(
+        url: dotenv.env['SUPABASE_URL'] ?? '',
+        anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
+      );
+
+      final supabase = Supabase.instance.client;
+      if (supabase.auth.currentSession == null) {
+        try {
+          await supabase.auth.signInAnonymously();
+        } catch (e) {
+          debugPrint('Supabase anonymous sign in failed: $e');
+        }
+      }
+    } catch (e) {
+      debugPrint('Supabase initialization failed (non-blocking): $e');
     }
   });
 }
