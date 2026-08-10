@@ -18,10 +18,12 @@ Future<void> main() async {
   // ignore: prefer_single_quotes, avoid_redundant_argument_values
   await dotenv.load(fileName: '.env');
 
-  // Enforce landscape mode for mobile devices
+  // Allow all orientations on mobile devices
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.landscapeRight,
     DeviceOrientation.landscapeLeft,
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
   ]);
 
   try {

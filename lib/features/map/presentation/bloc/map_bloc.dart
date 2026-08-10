@@ -270,8 +270,11 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         try {
           List<String>? typesFilter;
           if (event.zoom <= 6.0) {
-            // When zoomed far out, only show major airports to prevent clutter and API limits.
             typesFilter = ['large_airport'];
+          } else if (event.zoom <= 9.0) {
+            typesFilter = ['large_airport', 'medium_airport'];
+          } else {
+            typesFilter = null; // Show all airports when zoomed in
           }
 
           newAirports = await _airportRepository.getAirportsInBoundingBox(

@@ -4,6 +4,7 @@ library;
 import 'package:flutter/material.dart';
 
 import 'package:skynav/core/theme/app_theme.dart';
+import 'package:skynav/core/utils/responsive_layout.dart';
 import 'package:skynav/features/map/presentation/bloc/map_bloc.dart';
 
 /// Floating map controls panel.
@@ -18,6 +19,9 @@ class MapControls extends StatelessWidget {
     required this.onFollowToggle,
     required this.isDrawMode,
     required this.onDrawModeToggle,
+    required this.isEmergencyMode,
+    required this.onEmergencyModeToggle,
+    required this.on3DToggle,
     required this.onClearRoute,
     super.key,
   });
@@ -31,6 +35,9 @@ class MapControls extends StatelessWidget {
   final VoidCallback onFollowToggle;
   final bool isDrawMode;
   final VoidCallback onDrawModeToggle;
+  final bool isEmergencyMode;
+  final VoidCallback onEmergencyModeToggle;
+  final VoidCallback on3DToggle;
   final VoidCallback onClearRoute;
 
   @override
@@ -75,6 +82,12 @@ class MapControls extends StatelessWidget {
                   // Reset bearing to north (future)
                 },
               ),
+              const _ControlDivider(),
+              _ControlButton(
+                icon: Icons.threed_rotation,
+                tooltip: 'Synthetic Vision (3D)',
+                onPressed: on3DToggle,
+              ),
             ],
           ),
 
@@ -94,6 +107,21 @@ class MapControls extends StatelessWidget {
                 icon: Icons.delete_outline,
                 tooltip: 'Clear Route',
                 onPressed: onClearRoute,
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 8),
+
+          // ── Emergency Controls ──
+          _ControlPanel(
+            children: [
+              _LayerToggle(
+                icon: Icons.warning,
+                label: 'NRST / Emergency',
+                isActive: isEmergencyMode,
+                onTap: onEmergencyModeToggle,
+                activeColor: AppTheme.error,
               ),
             ],
           ),
@@ -192,17 +220,18 @@ class _ControlButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isPhone = ResponsiveLayout.isPhone(context);
     return Tooltip(
       message: tooltip,
       child: InkWell(
         onTap: onPressed,
         borderRadius: BorderRadius.circular(8),
         child: Padding(
-          padding: const EdgeInsets.all(18), // Increased for tablet/cockpit
+          padding: EdgeInsets.all(isPhone ? 12 : 18),
           child: Icon(
             icon,
             color: AppTheme.textPrimary,
-            size: 28, // Increased for tablet/cockpit
+            size: isPhone ? 24 : 28,
           ),
         ),
       ),
@@ -217,26 +246,29 @@ class _LayerToggle extends StatelessWidget {
     required this.label,
     required this.isActive,
     required this.onTap,
+    this.activeColor,
   });
 
   final IconData icon;
   final String label;
   final bool isActive;
   final VoidCallback onTap;
+  final Color? activeColor;
 
   @override
   Widget build(BuildContext context) {
+    final isPhone = ResponsiveLayout.isPhone(context);
     return Tooltip(
       message: label,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(8),
         child: Padding(
-          padding: const EdgeInsets.all(18), // Increased for tablet/cockpit
+          padding: EdgeInsets.all(isPhone ? 12 : 18),
           child: Icon(
             icon,
-            color: isActive ? AppTheme.accentPrimary : AppTheme.textTertiary,
-            size: 28, // Increased for tablet/cockpit
+            color: isActive ? (activeColor ?? AppTheme.accentPrimary) : AppTheme.textTertiary,
+            size: isPhone ? 24 : 28,
           ),
         ),
       ),

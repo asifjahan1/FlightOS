@@ -17,6 +17,11 @@ class NavMath {
     return meters / 1000.0;
   }
 
+  /// Calculate initial bearing between two points in degrees.
+  static double bearing(double lat1, double lon1, double lat2, double lon2) {
+    return _distanceCalculator.bearing(LatLng(lat1, lon1), LatLng(lat2, lon2));
+  }
+
   /// Calculate Estimated Time Enroute (ETE) in minutes based on distance (NM) and speed (Knots).
   static double calculateEteMinutes(double distanceNm, double speedKnots) {
     if (speedKnots <= 0) return 0;

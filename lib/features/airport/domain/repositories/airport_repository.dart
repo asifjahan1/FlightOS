@@ -15,6 +15,9 @@ abstract class AirportRepository {
     List<String>? types,
   });
 
+  /// Fetches the nearest airports to a given coordinate.
+  Future<List<Airport>> getNearestAirports(double lat, double lon, int limit);
+
   /// Fetches runways for a specific airport.
   Future<List<Runway>> getRunways(String airportIcao);
 
