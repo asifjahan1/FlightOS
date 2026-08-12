@@ -8,6 +8,9 @@ import 'package:skynav/core/constants/api_constants.dart';
 class OpenAipApiClient {
   OpenAipApiClient();
 
+  /// Track whether we've already warned about auth failure to avoid log spam.
+  bool _authFailureLogged = false;
+
   /// Fetches airspaces within a bounding box.
   /// Bounding box format usually expects lonMin,latMin,lonMax,latMax.
   Future<List<dynamic>> fetchAirspaces({
@@ -18,16 +21,19 @@ class OpenAipApiClient {
   }) async {
     final apiKey = ApiConstants.openAipApiKey;
     if (apiKey.isEmpty) {
-      if (kDebugMode) {
-        print('OpenAIP API Key is missing. Please add it to .env');
+      if (kDebugMode && !_authFailureLogged) {
+        debugPrint('[OpenAIP] API Key is missing. Add OPENAIP_CLIENT_ID to .env');
+        _authFailureLogged = true;
       }
       return [];
     }
 
     try {
-      // bbox is typically lonMin,latMin,lonMax,latMax
+      // Send key as both header and query param (docs support both methods)
       final uri = Uri.parse(
-        '${ApiConstants.openAipApiEndpoint}/airspaces?bbox=$lonMin,$latMin,$lonMax,$latMax',
+        '${ApiConstants.openAipApiEndpoint}/airspaces'
+        '?bbox=$lonMin,$latMin,$lonMax,$latMax'
+        '&apiKey=$apiKey',
       );
 
       final response = await http.get(
@@ -41,16 +47,28 @@ class OpenAipApiClient {
         // ignore: avoid_dynamic_calls
         final items = data['items'] as List<dynamic>?;
         return items ?? [];
+      } else if (response.statusCode == 403 || response.statusCode == 401) {
+        // Auth failure — log once, don't spam on every map move
+        if (!_authFailureLogged) {
+          debugPrint(
+            '[OpenAIP] Authentication failed (${response.statusCode}). '
+            'Your API key may be expired. Generate a new one at openaip.net.',
+          );
+          _authFailureLogged = true;
+        }
+        return [];
       } else {
-        throw Exception(
-          'OpenAIP API Error: ${response.statusCode} - ${response.body}',
-        );
+        if (kDebugMode) {
+          debugPrint('[OpenAIP] API Error: ${response.statusCode}');
+        }
+        return [];
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Failed to fetch airspaces from OpenAIP: $e');
+        debugPrint('[OpenAIP] Network error: $e');
       }
       return [];
     }
   }
 }
+

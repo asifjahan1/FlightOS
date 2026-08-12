@@ -25,6 +25,9 @@ import 'features/airspace/presentation/bloc/airspace_bloc.dart' as _i949;
 import 'features/checklist/presentation/bloc/checklist_bloc.dart' as _i268;
 import 'features/flight_plan/presentation/bloc/flight_plan_bloc.dart' as _i1022;
 import 'features/map/presentation/bloc/map_bloc.dart' as _i236;
+import 'features/navigation/data/services/default_navigation_service.dart'
+    as _i871;
+import 'features/navigation/domain/services/navigation_service.dart' as _i267;
 import 'features/scratchpad/presentation/bloc/scratchpad_bloc.dart' as _i153;
 import 'features/telemetry/data/services/fleet_tracking_service.dart' as _i381;
 import 'features/telemetry/presentation/bloc/telemetry_bloc.dart' as _i695;
@@ -65,6 +68,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i406.LocationService>(),
         gh<_i381.FleetTrackingService>(),
       ),
+    );
+    gh.lazySingleton<_i267.NavigationService>(
+      () => _i871.DefaultNavigationService(),
     );
     gh.lazySingleton<_i969.AirportSeeder>(
       () => _i969.AirportSeeder(gh<_i234.AppDatabase>()),
