@@ -28,7 +28,7 @@ abstract final class DatabaseConstants {
   static const String airportsDb = 'airports.db';
 
   /// User data database file (routes, favorites, logs, settings).
-  static const String userDb = 'user.db';
+  static const String userDb = 'user_v2.db';
 
   /// Tile cache database file.
   static const String tileCacheDb = 'tile_cache.db';
