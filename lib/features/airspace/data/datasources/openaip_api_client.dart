@@ -22,7 +22,9 @@ class OpenAipApiClient {
     final apiKey = ApiConstants.openAipApiKey;
     if (apiKey.isEmpty) {
       if (kDebugMode && !_authFailureLogged) {
-        debugPrint('[OpenAIP] API Key is missing. Add OPENAIP_CLIENT_ID to .env');
+        debugPrint(
+          '[OpenAIP] API Key is missing. Add OPENAIP_CLIENT_ID to .env',
+        );
         _authFailureLogged = true;
       }
       return [];
@@ -71,4 +73,3 @@ class OpenAipApiClient {
     }
   }
 }
-
