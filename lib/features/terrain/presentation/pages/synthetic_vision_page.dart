@@ -1,8 +1,9 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:skynav/core/theme/app_theme.dart';
+// import 'package:skynav/core/theme/app_theme.dart';
 import 'package:skynav/features/telemetry/presentation/bloc/telemetry_bloc.dart';
-import 'dart:math' as math;
 
 class SyntheticVisionPage extends StatelessWidget {
   const SyntheticVisionPage({super.key});
@@ -12,7 +13,10 @@ class SyntheticVisionPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text('Synthetic Vision (AHRS)', style: TextStyle(color: Colors.white)),
+        title: const Text(
+          'Synthetic Vision (AHRS)',
+          style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
@@ -22,11 +26,11 @@ class SyntheticVisionPage extends StatelessWidget {
           BlocBuilder<TelemetryBloc, TelemetryState>(
             builder: (context, state) {
               double pitch = 0; // Degrees
-              double roll = 0;  // Degrees
-              
+              double roll = 0; // Degrees
+
               if (state is TelemetryActive) {
-                 // Simulate pitch/roll from altitude changes or assume 0 for now
-                 // In a real EFB, this comes from AHRS gyro sensors.
+                // Simulate pitch/roll from altitude changes or assume 0 for now
+                // In a real EFB, this comes from AHRS gyro sensors.
               }
 
               return Transform.rotate(
@@ -64,36 +68,30 @@ class SyntheticVisionPage extends StatelessWidget {
               );
             },
           ),
-          
+
           // Crosshair / Aircraft Symbol
-          Center(
-            child: Icon(
-              Icons.flight,
-              color: Colors.yellow,
-              size: 48,
-            ),
+          const Center(
+            child: Icon(Icons.flight, color: Colors.yellow, size: 48),
           ),
-          
+
           // HUD Overlays
-          const Positioned.fill(
-            child: _HudOverlay(),
-          ),
-          
+          const Positioned.fill(child: _HudOverlay()),
+
           // Waiting for GPS Warning
           BlocBuilder<TelemetryBloc, TelemetryState>(
             builder: (context, state) {
               if (state is! TelemetryActive) {
-                 return const Center(
-                   child: Text(
-                     'WAITING FOR GPS/AHRS',
-                     style: TextStyle(
-                       color: Colors.red,
-                       fontSize: 24,
-                       fontWeight: FontWeight.bold,
-                       backgroundColor: Colors.black54,
-                     ),
-                   ),
-                 );
+                return const Center(
+                  child: Text(
+                    'WAITING FOR GPS/AHRS',
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      backgroundColor: Colors.black54,
+                    ),
+                  ),
+                );
               }
               return const SizedBox.shrink();
             },
@@ -114,13 +112,13 @@ class _HudOverlay extends StatelessWidget {
         double altitude = 0;
         double speed = 0;
         double heading = 0;
-        
+
         if (state is TelemetryActive) {
           altitude = state.data.altitudeMslFeet;
           speed = state.data.groundSpeedKnots;
           heading = state.data.trueTrack;
         }
-        
+
         return Stack(
           children: [
             // Altitude Tape (Right)
@@ -136,13 +134,17 @@ class _HudOverlay extends StatelessWidget {
                   alignment: Alignment.center,
                   child: Text(
                     '${altitude.round()}\nFT',
-                    style: const TextStyle(color: Colors.greenAccent, fontSize: 18, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: Colors.greenAccent,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ),
               ),
             ),
-            
+
             // Speed Tape (Left)
             Positioned(
               left: 20,
@@ -156,13 +158,17 @@ class _HudOverlay extends StatelessWidget {
                   alignment: Alignment.center,
                   child: Text(
                     '${speed.round()}\nKT',
-                    style: const TextStyle(color: Colors.greenAccent, fontSize: 18, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: Colors.greenAccent,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ),
               ),
             ),
-            
+
             // Heading Tape (Top)
             Positioned(
               top: 20,
@@ -176,12 +182,16 @@ class _HudOverlay extends StatelessWidget {
                   alignment: Alignment.center,
                   child: Text(
                     'HDG ${heading.round().toString().padLeft(3, '0')}°',
-                    style: const TextStyle(color: Colors.greenAccent, fontSize: 20, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: Colors.greenAccent,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
             ),
-            
+
             // 3D Terrain Warning
             const Positioned(
               bottom: 40,
@@ -190,7 +200,11 @@ class _HudOverlay extends StatelessWidget {
               child: Center(
                 child: Text(
                   'SYNTHETIC TERRAIN DATA UNAVAILABLE',
-                  style: TextStyle(color: Colors.yellow, fontSize: 14, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: Colors.yellow,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),

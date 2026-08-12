@@ -82,22 +82,18 @@ Future<void> main() async {
 
 /// Initialize Supabase in the background so it doesn't block app startup.
 /// On Android with slow/no network, this can take several seconds.
+/// Anonymous sign-in is not used — the app works without Supabase auth.
 void _initSupabaseInBackground() {
   Future<void>(() async {
     try {
-      await Supabase.initialize(
-        url: dotenv.env['SUPABASE_URL'] ?? '',
-        anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
-      );
-
-      final supabase = Supabase.instance.client;
-      if (supabase.auth.currentSession == null) {
-        try {
-          await supabase.auth.signInAnonymously();
-        } catch (e) {
-          debugPrint('Supabase anonymous sign in failed: $e');
-        }
+      final url = dotenv.env['SUPABASE_URL'] ?? '';
+      final key = dotenv.env['SUPABASE_ANON_KEY'] ?? '';
+      if (url.isEmpty || key.isEmpty) {
+        debugPrint('Supabase credentials missing — skipping init.');
+        return;
       }
+      await Supabase.initialize(url: url, anonKey: key);
+      debugPrint('Supabase initialized (no auth required).');
     } catch (e) {
       debugPrint('Supabase initialization failed (non-blocking): $e');
     }
