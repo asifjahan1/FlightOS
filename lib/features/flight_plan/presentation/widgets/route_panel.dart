@@ -26,9 +26,9 @@ class _RoutePanelState extends State<RoutePanel> {
         if (state is! FlightPlanActive || state.flightPlan.waypoints.isEmpty) {
           return const SizedBox.shrink(); // Hide if no plan
         }
-        
+
         final plan = state.flightPlan;
-        
+
         return BlocBuilder<TelemetryBloc, TelemetryState>(
           builder: (context, telemetryState) {
             double currentSpeed = plan.cruiseSpeedKnots;
@@ -37,24 +37,27 @@ class _RoutePanelState extends State<RoutePanel> {
               if (telemetryState.data.groundSpeedKnots > 0) {
                 currentSpeed = telemetryState.data.groundSpeedKnots;
               }
-              
+
               progress = _navService.calculateProgress(
                 flightPlan: plan,
                 telemetry: telemetryState.data,
                 previousLegIndex: _currentLegIndex,
               );
-              
+
               if (progress != null) {
-                 // We don't setState here to avoid rebuild loops, 
-                 // we just store the leg for the next build cycle/calculation
-                 _currentLegIndex = progress.currentLegIndex;
+                // We don't setState here to avoid rebuild loops,
+                // we just store the leg for the next build cycle/calculation
+                _currentLegIndex = progress.currentLegIndex;
               }
             }
 
             final totalDistance = plan.totalDistanceNm;
-            final eteMins = NavMath.calculateEteMinutes(totalDistance, currentSpeed);
+            final eteMins = NavMath.calculateEteMinutes(
+              totalDistance,
+              currentSpeed,
+            );
             final eteStr = NavMath.formatEteDh(eteMins);
-            
+
             return Container(
               margin: const EdgeInsets.all(16),
               padding: const EdgeInsets.all(16),
@@ -63,7 +66,11 @@ class _RoutePanelState extends State<RoutePanel> {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: AppTheme.border),
                 boxShadow: const [
-                  BoxShadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 4)),
+                  BoxShadow(
+                    color: Colors.black45,
+                    blurRadius: 10,
+                    offset: Offset(0, 4),
+                  ),
                 ],
               ),
               child: Column(
@@ -88,8 +95,13 @@ class _RoutePanelState extends State<RoutePanel> {
                         ],
                       ),
                       IconButton(
-                        icon: const Icon(Icons.clear, color: AppTheme.textSecondary),
-                        onPressed: () => context.read<FlightPlanBloc>().add(const FlightPlanCleared()),
+                        icon: const Icon(
+                          Icons.clear,
+                          color: AppTheme.textSecondary,
+                        ),
+                        onPressed: () => context.read<FlightPlanBloc>().add(
+                          const FlightPlanCleared(),
+                        ),
                         tooltip: 'Clear Route',
                       ),
                     ],
@@ -101,21 +113,39 @@ class _RoutePanelState extends State<RoutePanel> {
                     runSpacing: 8,
                     children: plan.waypoints.asMap().entries.map((entry) {
                       final isLast = entry.key == plan.waypoints.length - 1;
-                      final isActive = progress != null && entry.key == progress.currentLegIndex + 1;
+                      final isActive =
+                          progress != null &&
+                          entry.key == progress.currentLegIndex + 1;
                       return Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Chip(
-                            label: Text(entry.value.name, style: TextStyle(fontWeight: FontWeight.bold, color: isActive ? AppTheme.backgroundPrimary : AppTheme.textPrimary)),
-                            backgroundColor: isActive ? AppTheme.accentPrimary : AppTheme.backgroundSecondary,
+                            label: Text(
+                              entry.value.name,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: isActive
+                                    ? AppTheme.backgroundPrimary
+                                    : AppTheme.textPrimary,
+                              ),
+                            ),
+                            backgroundColor: isActive
+                                ? AppTheme.accentPrimary
+                                : AppTheme.backgroundSecondary,
                             side: const BorderSide(color: AppTheme.border),
                             deleteIcon: const Icon(Icons.close, size: 16),
-                            onDeleted: () => context.read<FlightPlanBloc>().add(WaypointRemoved(entry.key)),
+                            onDeleted: () => context.read<FlightPlanBloc>().add(
+                              WaypointRemoved(entry.key),
+                            ),
                           ),
                           if (!isLast)
                             const Padding(
                               padding: EdgeInsets.symmetric(horizontal: 4),
-                              child: Icon(Icons.arrow_forward_ios, size: 12, color: AppTheme.textTertiary),
+                              child: Icon(
+                                Icons.arrow_forward_ios,
+                                size: 12,
+                                color: AppTheme.textTertiary,
+                              ),
                             ),
                         ],
                       );
@@ -128,13 +158,27 @@ class _RoutePanelState extends State<RoutePanel> {
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       spacing: 16,
                       children: [
-                        _Stat(label: 'DIST', value: '${totalDistance.toStringAsFixed(1)} NM'),
+                        _Stat(
+                          label: 'DIST',
+                          value: '${totalDistance.toStringAsFixed(1)} NM',
+                        ),
                         _Stat(label: 'ETE', value: eteStr),
                         if (progress != null) ...[
-                          _Stat(label: 'XTK', value: '${progress.crossTrackErrorNm.abs().toStringAsFixed(2)} ${progress.crossTrackErrorNm >= 0 ? 'R' : 'L'}'),
-                          _Stat(label: 'NEXT', value: '${progress.distanceToNextWaypointNm.toStringAsFixed(1)} NM'),
+                          _Stat(
+                            label: 'XTK',
+                            value:
+                                '${progress.crossTrackErrorNm.abs().toStringAsFixed(2)} ${progress.crossTrackErrorNm >= 0 ? 'R' : 'L'}',
+                          ),
+                          _Stat(
+                            label: 'NEXT',
+                            value:
+                                '${progress.distanceToNextWaypointNm.toStringAsFixed(1)} NM',
+                          ),
                         ] else
-                          _Stat(label: 'GS', value: '${currentSpeed.round()} kt'),
+                          _Stat(
+                            label: 'GS',
+                            value: '${currentSpeed.round()} kt',
+                          ),
                       ],
                     ),
                   ),
@@ -159,12 +203,20 @@ class _Stat extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(color: AppTheme.textTertiary, fontSize: 11, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            color: AppTheme.textTertiary,
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         const SizedBox(height: 2),
         Text(
           value,
-          style: const TextStyle(color: AppTheme.accentPrimary, fontSize: 16, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            color: AppTheme.accentPrimary,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ],
     );
