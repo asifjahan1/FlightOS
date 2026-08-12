@@ -16,20 +16,17 @@ import 'package:skynav/core/constants/map_constants.dart';
 import 'package:skynav/core/theme/app_theme.dart';
 import 'package:skynav/core/utils/nav_math.dart';
 import 'package:skynav/core/utils/responsive_layout.dart';
+import 'package:skynav/features/airport/presentation/widgets/airport_profile_sheet.dart';
+import 'package:skynav/features/airport/presentation/widgets/nearest_airports_panel.dart';
 import 'package:skynav/features/airspace/presentation/bloc/airspace_bloc.dart';
 import 'package:skynav/features/airspace/presentation/bloc/airspace_event.dart';
 import 'package:skynav/features/airspace/presentation/bloc/airspace_state.dart';
-import 'package:skynav/features/airport/presentation/widgets/airport_profile_sheet.dart';
 import 'package:skynav/features/checklist/presentation/widgets/checklist_panel.dart';
-import 'package:skynav/features/airport/presentation/widgets/nearest_airports_panel.dart';
 import 'package:skynav/features/flight_plan/domain/entities/waypoint.dart';
 import 'package:skynav/features/flight_plan/presentation/bloc/flight_plan_bloc.dart';
 import 'package:skynav/features/flight_plan/presentation/widgets/route_panel.dart';
 import 'package:skynav/features/map/presentation/bloc/map_bloc.dart';
 import 'package:skynav/features/map/presentation/widgets/airport_search_bar.dart';
-import 'package:skynav/features/terrain/presentation/pages/synthetic_vision_page.dart';
-import 'package:skynav/features/traffic/presentation/widgets/aircraft_details_sheet.dart'
-    as skynav_details;
 import 'package:skynav/features/map/presentation/widgets/map_controls.dart';
 import 'package:skynav/features/map/presentation/widgets/map_info_bar.dart';
 import 'package:skynav/features/scratchpad/presentation/widgets/scratchpad_panel.dart';
@@ -39,7 +36,10 @@ import 'package:skynav/features/telemetry/presentation/widgets/telemetry_panel.d
 import 'package:skynav/features/terrain/presentation/bloc/terrain_bloc.dart';
 import 'package:skynav/features/terrain/presentation/bloc/terrain_event.dart';
 import 'package:skynav/features/terrain/presentation/bloc/terrain_state.dart';
+import 'package:skynav/features/terrain/presentation/pages/synthetic_vision_page.dart';
 import 'package:skynav/features/traffic/presentation/bloc/traffic_bloc.dart';
+import 'package:skynav/features/traffic/presentation/widgets/aircraft_details_sheet.dart'
+    as skynav_details;
 import 'package:skynav/features/weather/domain/entities/weather_data.dart';
 import 'package:skynav/features/weather/presentation/bloc/weather_bloc.dart';
 import 'package:skynav/features/weather/presentation/bloc/weather_event.dart';
@@ -281,7 +281,7 @@ class _MapReadyViewState extends State<_MapReadyView> {
   @override
   Widget build(BuildContext context) {
     final isPhone = ResponsiveLayout.isPhone(context);
-    
+
     return Stack(
       children: [
         // ── Main FlutterMap ──
@@ -315,12 +315,14 @@ class _MapReadyViewState extends State<_MapReadyView> {
                           final bounds = camera.visibleBounds;
                           // Only dispatch if the bounds are reasonable
                           // (not zero-sized from an incomplete layout).
-                          final latSpan = (bounds.northEast.latitude -
-                                  bounds.southWest.latitude)
-                              .abs();
-                          final lonSpan = (bounds.northEast.longitude -
-                                  bounds.southWest.longitude)
-                              .abs();
+                          final latSpan =
+                              (bounds.northEast.latitude -
+                                      bounds.southWest.latitude)
+                                  .abs();
+                          final lonSpan =
+                              (bounds.northEast.longitude -
+                                      bounds.southWest.longitude)
+                                  .abs();
                           if (latSpan > 0.1 && lonSpan > 0.1) {
                             context.read<MapBloc>().add(
                               MapMoved(
@@ -512,7 +514,8 @@ class _MapReadyViewState extends State<_MapReadyView> {
                                   context: context,
                                   isScrollControlled: true,
                                   backgroundColor: Colors.transparent,
-                                  builder: (ctx) => AirportProfileSheet(airport: airport),
+                                  builder: (ctx) =>
+                                      AirportProfileSheet(airport: airport),
                                 );
                               },
                               child: DecoratedBox(
@@ -1101,15 +1104,20 @@ class _MapReadyViewState extends State<_MapReadyView> {
         const Positioned(
           top: 80,
           left: 0,
-          child: SizedBox(
-            width: 320,
-            child: RoutePanel(),
-          ),
+          child: SizedBox(width: 320, child: RoutePanel()),
         ),
 
-        // ── Telemetry Panel (left-center) ──
+        // ── Telemetry Panel (bottom-left) ──
         if (!isPhone)
-          const Positioned(left: 16, top: 80, child: TelemetryPanel()),
+          const Positioned(left: 16, bottom: 100, child: TelemetryPanel()),
+
+        // ── Nearest Airports Panel (Emergency Mode) ──
+        if (_isEmergencyMode)
+          const Positioned(
+            top: 80,
+            right: 80, // Offset from map controls
+            child: SizedBox(width: 320, child: NearestAirportsPanel()),
+          ),
 
         // ── Airspace Alert Banner ──
         BlocBuilder<AirspaceBloc, AirspaceState>(

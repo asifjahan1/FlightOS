@@ -5,10 +5,21 @@ import 'package:skynav/core/utils/nav_math.dart';
 import 'package:skynav/features/flight_plan/presentation/bloc/flight_plan_bloc.dart';
 import 'package:skynav/features/telemetry/presentation/bloc/telemetry_bloc.dart';
 
-class RoutePanel extends StatelessWidget {
+import 'package:get_it/get_it.dart';
+import 'package:skynav/features/navigation/domain/services/navigation_service.dart';
+import 'package:skynav/features/navigation/domain/entities/route_progress.dart';
+
+class RoutePanel extends StatefulWidget {
   const RoutePanel({super.key});
 
   @override
+  State<RoutePanel> createState() => _RoutePanelState();
+}
+
+class _RoutePanelState extends State<RoutePanel> {
+  final NavigationService _navService = GetIt.I<NavigationService>();
+  int _currentLegIndex = 0;
+
   Widget build(BuildContext context) {
     return BlocBuilder<FlightPlanBloc, FlightPlanState>(
       builder: (context, state) {
@@ -21,8 +32,23 @@ class RoutePanel extends StatelessWidget {
         return BlocBuilder<TelemetryBloc, TelemetryState>(
           builder: (context, telemetryState) {
             double currentSpeed = plan.cruiseSpeedKnots;
-            if (telemetryState is TelemetryActive && telemetryState.data.groundSpeedKnots > 0) {
-              currentSpeed = telemetryState.data.groundSpeedKnots;
+            RouteProgress? progress;
+            if (telemetryState is TelemetryActive) {
+              if (telemetryState.data.groundSpeedKnots > 0) {
+                currentSpeed = telemetryState.data.groundSpeedKnots;
+              }
+              
+              progress = _navService.calculateProgress(
+                flightPlan: plan,
+                telemetry: telemetryState.data,
+                previousLegIndex: _currentLegIndex,
+              );
+              
+              if (progress != null) {
+                 // We don't setState here to avoid rebuild loops, 
+                 // we just store the leg for the next build cycle/calculation
+                 _currentLegIndex = progress.currentLegIndex;
+              }
             }
 
             final totalDistance = plan.totalDistanceNm;
@@ -75,12 +101,14 @@ class RoutePanel extends StatelessWidget {
                     runSpacing: 8,
                     children: plan.waypoints.asMap().entries.map((entry) {
                       final isLast = entry.key == plan.waypoints.length - 1;
+                      final isActive = progress != null && entry.key == progress.currentLegIndex + 1;
                       return Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Chip(
-                            label: Text(entry.value.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                            backgroundColor: AppTheme.backgroundPrimary,
+                            label: Text(entry.value.name, style: TextStyle(fontWeight: FontWeight.bold, color: isActive ? AppTheme.backgroundPrimary : AppTheme.textPrimary)),
+                            backgroundColor: isActive ? AppTheme.accentPrimary : AppTheme.backgroundSecondary,
+                            side: const BorderSide(color: AppTheme.border),
                             deleteIcon: const Icon(Icons.close, size: 16),
                             onDeleted: () => context.read<FlightPlanBloc>().add(WaypointRemoved(entry.key)),
                           ),
@@ -94,13 +122,21 @@ class RoutePanel extends StatelessWidget {
                     }).toList(),
                   ),
                   const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _Stat(label: 'DIST', value: '${totalDistance.toStringAsFixed(1)} NM'),
-                      _Stat(label: 'ETE', value: eteStr),
-                      _Stat(label: 'GS', value: '${currentSpeed.round()} kt'),
-                    ],
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      spacing: 16,
+                      children: [
+                        _Stat(label: 'DIST', value: '${totalDistance.toStringAsFixed(1)} NM'),
+                        _Stat(label: 'ETE', value: eteStr),
+                        if (progress != null) ...[
+                          _Stat(label: 'XTK', value: '${progress.crossTrackErrorNm.abs().toStringAsFixed(2)} ${progress.crossTrackErrorNm >= 0 ? 'R' : 'L'}'),
+                          _Stat(label: 'NEXT', value: '${progress.distanceToNextWaypointNm.toStringAsFixed(1)} NM'),
+                        ] else
+                          _Stat(label: 'GS', value: '${currentSpeed.round()} kt'),
+                      ],
+                    ),
                   ),
                 ],
               ),
