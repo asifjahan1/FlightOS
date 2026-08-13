@@ -60,7 +60,7 @@ class DefaultNavigationService implements NavigationService {
     // distance * sin(theta)
     final xtkNm = distAD * math.sin(bearingDiff);
 
-    final double speed = telemetry.groundSpeedKnots > 0 ? telemetry.groundSpeedKnots : flightPlan.cruiseSpeedKnots;
+    final speed = telemetry.groundSpeedKnots > 0 ? telemetry.groundSpeedKnots : flightPlan.cruiseSpeedKnots;
     final etaMins = NavMath.calculateEteMinutes(distToNext, speed);
 
     return RouteProgress(

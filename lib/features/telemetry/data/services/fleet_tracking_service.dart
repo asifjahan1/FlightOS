@@ -7,15 +7,23 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 @lazySingleton
 class FleetTrackingService {
-  final SupabaseClient _supabase = Supabase.instance.client;
+  SupabaseClient? get _supabase {
+    try {
+      return Supabase.instance.client;
+    } catch (_) {
+      return null;
+    }
+  }
 
   /// Upserts the user's current location to the `fleet_locations` table.
   Future<void> broadcastLocation(TelemetryData data) async {
-    final userId = _supabase.auth.currentUser?.id;
+    final client = _supabase;
+    if (client == null) return;
+    final userId = client.auth.currentUser?.id;
     if (userId == null) return;
 
     try {
-      await _supabase.from('fleet_locations').upsert({
+      await client.from('fleet_locations').upsert({
         'id': userId,
         'latitude': data.latitude,
         'longitude': data.longitude,
@@ -34,10 +42,14 @@ class FleetTrackingService {
   /// Streams the locations of all other fleet targets.
   /// If the current user is not the admin, this stream will yield empty lists due to RLS.
   Stream<List<FleetTarget>> getFleetStream() {
-    return _supabase.from('fleet_locations').stream(primaryKey: ['id']).map((
+    final client = _supabase;
+    if (client == null) {
+      return const Stream.empty();
+    }
+    return client.from('fleet_locations').stream(primaryKey: ['id']).map((
       List<Map<String, dynamic>> data,
     ) {
-      final currentUserId = _supabase.auth.currentUser?.id;
+      final currentUserId = client.auth.currentUser?.id;
 
       return data
           .where((row) => row['id'] != currentUserId) // Filter out ownship

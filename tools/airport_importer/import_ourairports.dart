@@ -84,8 +84,9 @@ void main() async {
   final airportsRes = await http.get(
     Uri.parse('https://davidmegginson.github.io/ourairports-data/airports.csv'),
   );
-  if (airportsRes.statusCode != 200)
+  if (airportsRes.statusCode != 200) {
     throw Exception('Failed to download airports');
+  }
 
   print('Parsing airports.csv...');
   final airportsCsv = const CsvDecoder().convert(airportsRes.body);
@@ -99,7 +100,7 @@ void main() async {
 
   final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
   var airportCount = 0;
-  var identToDbId = <String, int>{}; // Map OurAirports ident to inserted DB id
+  final identToDbId = <String, int>{}; // Map OurAirports ident to inserted DB id
 
   db.execute('BEGIN TRANSACTION');
   for (var i = 1; i < airportsCsv.length; i++) {
@@ -147,8 +148,9 @@ void main() async {
   final runwaysRes = await http.get(
     Uri.parse('https://davidmegginson.github.io/ourairports-data/runways.csv'),
   );
-  if (runwaysRes.statusCode != 200)
+  if (runwaysRes.statusCode != 200) {
     throw Exception('Failed to download runways');
+  }
 
   print('Parsing runways.csv...');
   final runwaysCsv = const CsvDecoder().convert(runwaysRes.body);

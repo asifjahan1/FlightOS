@@ -3,7 +3,7 @@ library;
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-// import 'package:skynav/core/constants/api_constants.dart';
+import 'package:skynav/core/constants/api_constants.dart';
 import 'package:skynav/features/traffic/domain/models/aircraft_state.dart';
 
 /// Client to communicate with the OpenSky Network API.
@@ -18,7 +18,7 @@ class OpenSkyApiClient {
   }) async {
     try {
       final uri = Uri.parse(
-        r'${ApiConstants.openSkyApiEndpoint}/states/all?lamin=$latMin&lomin=$lonMin&lamax=$latMax&lomax=$lonMax',
+        '${ApiConstants.openSkyApiEndpoint}/states/all?lamin=$latMin&lomin=$lonMin&lamax=$latMax&lomax=$lonMax',
       );
 
       // Using anonymous access for now as per requirements.
@@ -43,11 +43,11 @@ class OpenSkyApiClient {
             )
             .toList();
       } else {
-        throw Exception(r'OpenSky API Error: ${response.statusCode}');
+        throw Exception('OpenSky API Error: ${response.statusCode}');
       }
     } catch (e) {
       if (kDebugMode) {
-        print(r'Failed to fetch traffic from OpenSky: $e');
+        debugPrint('Failed to fetch traffic from OpenSky: $e');
       }
       return [];
     }

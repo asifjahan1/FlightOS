@@ -37,7 +37,8 @@ class OverpassApiClient {
 
         final facilities = <String>{};
         for (final el in elements) {
-          final tags = el['tags'] as Map<String, dynamic>?;
+          final elMap = el as Map<String, dynamic>;
+          final tags = elMap['tags'] as Map<String, dynamic>?;
           if (tags != null) {
             final amenity = tags['amenity']?.toString();
             final name = tags['name']?.toString();
@@ -46,7 +47,7 @@ class OverpassApiClient {
                   .replaceAll('_', ' ')
                   .toUpperCase();
               facilities.add(
-                name != null ? r'$name ($formattedAmenity)' : formattedAmenity,
+                name != null ? '$name ($formattedAmenity)' : formattedAmenity,
               );
             }
           }
@@ -56,7 +57,7 @@ class OverpassApiClient {
       return [];
     } catch (e) {
       if (kDebugMode) {
-        print(r'Failed to fetch facilities from Overpass: $e');
+        debugPrint('Failed to fetch facilities from Overpass: $e');
       }
       return [];
     }

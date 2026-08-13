@@ -11,7 +11,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:flutter_map_maplibre/flutter_map_maplibre.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:skynav/core/constants/map_constants.dart';
 import 'package:skynav/core/theme/app_theme.dart';
@@ -378,19 +377,14 @@ class _MapReadyViewState extends State<_MapReadyView> {
                   ),
                   children: [
                     // ── Base Tile Layer ──
-                    if (Platform.isAndroid)
-                      const MapLibreLayer(
-                        initStyle: 'https://demotiles.maplibre.org/style.json',
-                      )
-                    else
-                      TileLayer(
-                        urlTemplate:
-                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                        userAgentPackageName: 'com.skynav.skynav',
-                        tileProvider: NetworkTileProvider(),
-                        maxZoom: MapConstants.maxZoom,
-                        // Use a dark-themed tile server or apply color filter
-                      ),
+                    TileLayer(
+                      urlTemplate:
+                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'com.skynav.skynav',
+                      tileProvider: NetworkTileProvider(),
+                      maxZoom: MapConstants.maxZoom,
+                      // Use a dark-themed tile server or apply color filter
+                    ),
 
                     // ── VFR Chart Overlay ──
                     if (widget.state.visibleLayers.contains(
@@ -561,6 +555,7 @@ class _MapReadyViewState extends State<_MapReadyView> {
                                   .map((airport) {
                                     final report =
                                         weatherState.reports[airport.icao];
+                                    if (report == null) return null;
                                     var catColor = Colors.grey;
                                     switch (report.category) {
                                       case FlightCategory.vfr:
@@ -663,6 +658,7 @@ class _MapReadyViewState extends State<_MapReadyView> {
                                       ),
                                     );
                                   })
+                                  .whereType<Marker>()
                                   .toList(),
                             );
                           }
