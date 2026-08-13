@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:skynav/features/airport/domain/entities/airport.dart';
-import 'package:skynav/features/airport/data/datasources/overpass_api_client.dart';
-import 'package:skynav/features/weather/presentation/widgets/weather_display_card.dart';
 import 'package:skynav/core/database/database.dart';
+import 'package:skynav/features/airport/data/datasources/overpass_api_client.dart';
+import 'package:skynav/features/airport/domain/entities/airport.dart';
+import 'package:skynav/features/weather/presentation/widgets/weather_display_card.dart';
 import 'package:skynav/injection.dart';
 
 class AirportDetailsPanel extends StatefulWidget {

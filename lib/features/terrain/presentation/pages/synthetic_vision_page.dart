@@ -25,8 +25,8 @@ class SyntheticVisionPage extends StatelessWidget {
           // Simulated 3D Background (Sky/Ground)
           BlocBuilder<TelemetryBloc, TelemetryState>(
             builder: (context, state) {
-              double pitch = 0; // Degrees
-              double roll = 0; // Degrees
+              final double pitch = 0; // Degrees
+              final double roll = 0; // Degrees
 
               if (state is TelemetryActive) {
                 // Simulate pitch/roll from altitude changes or assume 0 for now

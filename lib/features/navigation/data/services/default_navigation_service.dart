@@ -17,14 +17,14 @@ class DefaultNavigationService implements NavigationService {
     if (flightPlan.waypoints.length < 2) return null;
 
     final waypoints = flightPlan.waypoints;
-    int currentLeg = previousLegIndex.clamp(0, waypoints.length - 2);
+    var currentLeg = previousLegIndex.clamp(0, waypoints.length - 2);
     
     final lat = telemetry.latitude;
     final lon = telemetry.longitude;
     
     // Check if we have passed the current destination waypoint (very simplified: within 1 NM)
     // A robust EFB would check if we crossed the bisector.
-    bool hasAdvanced = false;
+    var hasAdvanced = false;
     do {
       hasAdvanced = false;
       if (currentLeg < waypoints.length - 2) {
@@ -60,7 +60,7 @@ class DefaultNavigationService implements NavigationService {
     // distance * sin(theta)
     final xtkNm = distAD * math.sin(bearingDiff);
 
-    double speed = telemetry.groundSpeedKnots > 0 ? telemetry.groundSpeedKnots : flightPlan.cruiseSpeedKnots;
+    final double speed = telemetry.groundSpeedKnots > 0 ? telemetry.groundSpeedKnots : flightPlan.cruiseSpeedKnots;
     final etaMins = NavMath.calculateEteMinutes(distToNext, speed);
 
     return RouteProgress(

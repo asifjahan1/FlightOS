@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:skynav/features/traffic/domain/entities/traffic_target.dart';
 
 class AircraftDetailsSheet extends StatelessWidget {
-  final TrafficTarget target;
 
   const AircraftDetailsSheet({super.key, required this.target});
+  final TrafficTarget target;
 
   @override
   Widget build(BuildContext context) {

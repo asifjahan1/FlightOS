@@ -227,7 +227,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         southWest: const LatLng(24.0, -125.0),
         northEast: const LatLng(50.0, -66.0),
       );
-      List<Airport> initialAirports = await _fetchInitialAirports(
+      var initialAirports = await _fetchInitialAirports(
         defaultBounds,
       );
 

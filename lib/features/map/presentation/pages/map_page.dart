@@ -554,8 +554,8 @@ class _MapReadyViewState extends State<_MapReadyView> {
                                   )
                                   .map((airport) {
                                     final report =
-                                        weatherState.reports[airport.icao]!;
-                                    Color catColor = Colors.grey;
+                                        weatherState.reports[airport.icao];
+                                    var catColor = Colors.grey;
                                     switch (report.category) {
                                       case FlightCategory.vfr:
                                         catColor = Colors.green;
