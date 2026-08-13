@@ -98,11 +98,11 @@ void main() async {
   ''');
 
   final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-  int airportCount = 0;
-  Map<String, int> identToDbId = {}; // Map OurAirports ident to inserted DB id
+  var airportCount = 0;
+  var identToDbId = <String, int>{}; // Map OurAirports ident to inserted DB id
 
   db.execute('BEGIN TRANSACTION');
-  for (int i = 1; i < airportsCsv.length; i++) {
+  for (var i = 1; i < airportsCsv.length; i++) {
     final row = airportsCsv[i];
     if (row.length < 18) continue;
 
@@ -124,7 +124,7 @@ void main() async {
 
     airportStmt.execute([
       icao,
-      iata.isEmpty ? null : iata,
+      if (iata.isEmpty) null else iata,
       name,
       type,
       lat,
@@ -160,9 +160,9 @@ void main() async {
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   ''');
 
-  int runwayCount = 0;
+  var runwayCount = 0;
   db.execute('BEGIN TRANSACTION');
-  for (int i = 1; i < runwaysCsv.length; i++) {
+  for (var i = 1; i < runwaysCsv.length; i++) {
     final row = runwaysCsv[i];
     if (row.length < 20) continue;
 
@@ -178,7 +178,7 @@ void main() async {
     final leIdent = row[8].toString();
     final heIdent = row[14].toString();
 
-    final designator = '\$leIdent/\$heIdent';
+    const designator = r'$leIdent/$heIdent';
 
     runwayStmt.execute([
       airportId,

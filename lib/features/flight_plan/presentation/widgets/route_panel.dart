@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
 import 'package:skynav/core/theme/app_theme.dart';
 import 'package:skynav/core/utils/nav_math.dart';
 import 'package:skynav/features/flight_plan/presentation/bloc/flight_plan_bloc.dart';
-import 'package:skynav/features/telemetry/presentation/bloc/telemetry_bloc.dart';
-
-import 'package:get_it/get_it.dart';
-import 'package:skynav/features/navigation/domain/services/navigation_service.dart';
 import 'package:skynav/features/navigation/domain/entities/route_progress.dart';
+import 'package:skynav/features/navigation/domain/services/navigation_service.dart';
+import 'package:skynav/features/telemetry/presentation/bloc/telemetry_bloc.dart';
 
 class RoutePanel extends StatefulWidget {
   const RoutePanel({super.key});

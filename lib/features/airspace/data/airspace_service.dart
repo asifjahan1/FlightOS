@@ -34,7 +34,7 @@ class AirspaceService {
             // OpenAIP Geometry is GeoJSON-like
             // Extracting Polygon coordinates (first ring)
             final geometry = jsonMap['geometry'] as Map<String, dynamic>?;
-            List<List<double>> boundary = [];
+            var boundary = <List<double>>[];
 
             if (geometry != null && geometry['type'] == 'Polygon') {
               final coordinates = geometry['coordinates'] as List<dynamic>?;

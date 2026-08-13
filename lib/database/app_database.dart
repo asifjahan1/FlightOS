@@ -140,9 +140,7 @@ LazyDatabase _openConnection() {
 
     return NativeDatabase.createInBackground(
       dbFile,
-      isolateSetup: () {
-        setupSqliteDatabase();
-      },
+      isolateSetup: setupSqliteDatabase,
       setup: (db) {
         setupSqliteDatabase();
       },
