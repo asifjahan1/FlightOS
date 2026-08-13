@@ -173,7 +173,7 @@ class GeolocatorLocationService implements LocationService {
         trueTrack: lastKnown!.trueTrack,
         accuracyMeters: 999, // 999 indicates offline simulated dead reckoning
       );
-      controller.add(lastKnown!);
+      controller.add(lastKnown);
     }
 
     void startDeadReckoning() {
@@ -205,7 +205,7 @@ class GeolocatorLocationService implements LocationService {
             trueTrack: pos.heading,
             accuracyMeters: pos.accuracy,
           );
-          controller.add(lastKnown!);
+          controller.add(lastKnown);
           resetTimeout();
         },
         onError: (e) {

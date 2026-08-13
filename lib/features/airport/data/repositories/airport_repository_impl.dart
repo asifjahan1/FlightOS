@@ -39,7 +39,7 @@ class AirportRepositoryImpl implements AirportRepository {
 
   @override
   Future<List<Airport>> getNearestAirports(double lat, double lon, int limit) async {
-    final boxSize = 1.0; // roughly 60nm
+    const boxSize = 1.0; // roughly 60nm
     final list = await _dao.getAirportsInBoundingBox(
       minLat: lat - boxSize,
       maxLat: lat + boxSize,

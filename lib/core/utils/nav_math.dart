@@ -42,9 +42,9 @@ class NavMath {
   static String formatEteDh(double minutes) {
     if (minutes <= 0 || minutes.isInfinite || minutes.isNaN) return '--';
 
-    final int days = (minutes / (60 * 24)).floor();
-    final int hours = ((minutes % (60 * 24)) / 60).floor();
-    final int mins = (minutes % 60).round();
+    final days = (minutes / (60 * 24)).floor();
+    final hours = ((minutes % (60 * 24)) / 60).floor();
+    final mins = (minutes % 60).round();
 
     if (days > 0) {
       return '${days}D ${hours}H';

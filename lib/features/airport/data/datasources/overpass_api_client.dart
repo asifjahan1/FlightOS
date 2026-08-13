@@ -11,7 +11,7 @@ class OverpassApiClient {
   Future<List<String>> fetchAirportFacilities(double lat, double lon) async {
     try {
       // Query amenities like restaurants, cafes, fuel within 2000m radius of the airport center
-      final query = r'''
+      const query = r'''
       [out:json][timeout:10];
       (
         node["amenity"~"restaurant|cafe|fast_food|fuel|car_rental"](around:2000,$lat,$lon);

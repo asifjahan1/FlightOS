@@ -33,7 +33,7 @@ class _FleetLayerState extends State<FleetLayer> {
           return const MarkerLayer(markers: []);
         }
 
-        final targets = snapshot.data!;
+        final targets = snapshot.data;
 
         final polylines = <Polyline>[];
         final markers = <Marker>[];
