@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.example.skynav"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -31,6 +31,11 @@ android {
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
         }
+    }
+
+    androidResources {
+        noCompress.add("sqlite")
+        noCompress.add("json")
     }
 }
 

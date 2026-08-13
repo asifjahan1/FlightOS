@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:skynav/features/traffic/domain/entities/traffic_target.dart';
 
 class AircraftDetailsSheet extends StatelessWidget {
-
   const AircraftDetailsSheet({super.key, required this.target});
   final TrafficTarget target;
 
@@ -10,19 +9,19 @@ class AircraftDetailsSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              r"Flight ${target.callsign ?? 'Unknown'}",
+              "Flight ${target.callsign ?? 'Unknown'}",
               style: Theme.of(
                 context,
               ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            const Text(r'ICAO Hex: ${target.icaoHex}'),
+            Text('ICAO Hex: ${target.icaoHex}'),
             const Divider(),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -30,17 +29,17 @@ class AircraftDetailsSheet extends StatelessWidget {
                 _buildInfoCol(
                   context,
                   'Altitude',
-                  r'${target.altitudeFeet.round()} ft',
+                  '${target.altitudeFeet.round()} ft',
                 ),
                 _buildInfoCol(
                   context,
                   'Speed',
-                  r'${target.groundSpeedKnots.round()} kts',
+                  '${target.groundSpeedKnots.round()} kts',
                 ),
                 _buildInfoCol(
                   context,
                   'Heading',
-                  r'${target.trackDegrees.round()}°',
+                  '${target.trackDegrees.round()}°',
                 ),
               ],
             ),

@@ -119,23 +119,32 @@ LazyDatabase _openConnection() {
       dbDir.createSync(recursive: true);
     }
 
-    if (!dbFile.existsSync()) {
+    if (!dbFile.existsSync() || dbFile.lengthSync() < 1000000) {
+      print(
+        '[AppDatabase] Copying database from assets (current size: ${dbFile.existsSync() ? dbFile.lengthSync() : 0})...',
+      );
       try {
-        // Copy the pre-populated airports database from assets
-        // Requires flutter/services.dart, so we must add it.
-        // Wait, rootBundle is in flutter/services.dart
-        // We will just copy the file.
-        // But since this is a desktop app, assets might be in a different path.
-        // Actually, flutter exposes assets via rootBundle.load.
         final assetData = await rootBundle.load('assets/data/airports.sqlite');
         final bytes = assetData.buffer.asUint8List(
           assetData.offsetInBytes,
           assetData.lengthInBytes,
         );
+
+        if (dbFile.existsSync()) {
+          dbFile.deleteSync();
+        }
         await dbFile.writeAsBytes(bytes, flush: true);
-      } catch (e) {
+        print(
+          '[AppDatabase] Successfully copied database! Size: ${dbFile.lengthSync()}',
+        );
+      } catch (e, stack) {
+        print('[AppDatabase] ERROR copying database: $e\n$stack');
         // Fallback: just let drift create an empty DB
       }
+    } else {
+      print(
+        '[AppDatabase] Database already exists and is large enough (${dbFile.lengthSync()} bytes). Skipping copy.',
+      );
     }
 
     return NativeDatabase.createInBackground(

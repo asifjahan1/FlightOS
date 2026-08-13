@@ -24,6 +24,8 @@ PODS:
   - "GoogleUtilities/NSData+zlib (8.1.2)":
     - GoogleUtilities/Privacy
   - GoogleUtilities/Privacy (8.1.2)
+  - maplibre (0.0.1):
+    - FlutterMacOS
   - package_info_plus (0.0.1):
     - FlutterMacOS
   - screen_retriever_macos (0.0.1):
@@ -41,6 +43,7 @@ DEPENDENCIES:
   - firebase_core (from `Flutter/ephemeral/.symlinks/plugins/firebase_core/macos`)
   - FlutterMacOS (from `Flutter/ephemeral`)
   - geolocator_apple (from `Flutter/ephemeral/.symlinks/plugins/geolocator_apple/darwin`)
+  - maplibre (from `Flutter/ephemeral/.symlinks/plugins/maplibre/macos`)
   - package_info_plus (from `Flutter/ephemeral/.symlinks/plugins/package_info_plus/macos`)
   - screen_retriever_macos (from `Flutter/ephemeral/.symlinks/plugins/screen_retriever_macos/macos`)
   - shared_preferences_foundation (from `Flutter/ephemeral/.symlinks/plugins/shared_preferences_foundation/darwin`)
@@ -63,6 +66,8 @@ EXTERNAL SOURCES:
     :path: Flutter/ephemeral
   geolocator_apple:
     :path: Flutter/ephemeral/.symlinks/plugins/geolocator_apple/darwin
+  maplibre:
+    :path: Flutter/ephemeral/.symlinks/plugins/maplibre/macos
   package_info_plus:
     :path: Flutter/ephemeral/.symlinks/plugins/package_info_plus/macos
   screen_retriever_macos:
@@ -83,6 +88,7 @@ SPEC CHECKSUMS:
   FlutterMacOS: d0db08ddef1a9af05a5ec4b724367152bb0500b1
   geolocator_apple: 66b711889fd333205763b83c9dcf0a57a28c7afd
   GoogleUtilities: 766ace00c6b10d8148408f329d10c4f051931850
+  maplibre: 63debb89f78dcdfdb58d6b415d01c02cd8ebfa75
   package_info_plus: 12f1c5c2cfe8727ca46cbd0b26677728972d9a5b
   screen_retriever_macos: 038d3f7b34a779b06f536842003e41e8ec1fb4b7
   shared_preferences_foundation: 5086985c1d43c5ba4d5e69a4e8083a389e2909e6
