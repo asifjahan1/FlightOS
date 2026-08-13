@@ -12,7 +12,9 @@ class AirportDao extends DatabaseAccessor<AppDatabase> with _$AirportDaoMixin {
 
   /// Fetch a single airport with its runways and frequencies by ICAO.
   Future<AirportData?> getAirportByIcao(String icao) {
-    return (select(airports)..where((t) => t.icao.equals(icao))).getSingleOrNull();
+    return (select(
+      airports,
+    )..where((t) => t.icao.equals(icao))).getSingleOrNull();
   }
 
   /// Get runways for a specific airport.
@@ -22,7 +24,9 @@ class AirportDao extends DatabaseAccessor<AppDatabase> with _$AirportDaoMixin {
 
   /// Get frequencies for a specific airport.
   Future<List<FrequencyData>> getFrequenciesForAirport(String icao) {
-    return (select(frequencies)..where((t) => t.airportIcao.equals(icao))).get();
+    return (select(
+      frequencies,
+    )..where((t) => t.airportIcao.equals(icao))).get();
   }
 
   /// Query airports within a bounding box.
@@ -31,11 +35,31 @@ class AirportDao extends DatabaseAccessor<AppDatabase> with _$AirportDaoMixin {
     required double maxLat,
     required double minLon,
     required double maxLon,
+    List<String>? types,
   }) {
-    return (select(airports)
+    final query = select(airports)
       ..where((t) => t.latitude.isBetweenValues(minLat, maxLat))
-      ..where((t) => t.longitude.isBetweenValues(minLon, maxLon))
-    ).get();
+      ..where((t) => t.longitude.isBetweenValues(minLon, maxLon));
+
+    if (types != null && types.isNotEmpty) {
+      query.where((t) => t.type.isIn(types));
+    }
+
+    return query.get();
+  }
+
+  /// Search airports by ICAO, IATA, or name.
+  Future<List<AirportData>> searchAirports(String query) {
+    final searchPattern = '%$query%';
+    return (select(airports)
+          ..where(
+            (t) =>
+                t.icao.like(searchPattern) |
+                t.iata.like(searchPattern) |
+                t.name.like(searchPattern),
+          )
+          ..limit(10))
+        .get();
   }
 
   /// Get the total number of airports in the database.
@@ -53,4 +77,3 @@ class AirportDao extends DatabaseAccessor<AppDatabase> with _$AirportDaoMixin {
     });
   }
 }
-

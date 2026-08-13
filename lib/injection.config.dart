@@ -20,11 +20,16 @@ import 'features/airport/data/repositories/airport_repository_impl.dart'
 import 'features/airport/data/seed/airport_seeder.dart' as _i969;
 import 'features/airport/domain/repositories/airport_repository.dart' as _i1064;
 import 'features/airspace/data/airspace_service.dart' as _i654;
+import 'features/airspace/data/datasources/openaip_api_client.dart' as _i291;
 import 'features/airspace/presentation/bloc/airspace_bloc.dart' as _i949;
 import 'features/checklist/presentation/bloc/checklist_bloc.dart' as _i268;
 import 'features/flight_plan/presentation/bloc/flight_plan_bloc.dart' as _i1022;
 import 'features/map/presentation/bloc/map_bloc.dart' as _i236;
+import 'features/navigation/data/services/default_navigation_service.dart'
+    as _i871;
+import 'features/navigation/domain/services/navigation_service.dart' as _i267;
 import 'features/scratchpad/presentation/bloc/scratchpad_bloc.dart' as _i153;
+import 'features/telemetry/data/services/fleet_tracking_service.dart' as _i381;
 import 'features/telemetry/presentation/bloc/telemetry_bloc.dart' as _i695;
 import 'features/terrain/data/terrain_service.dart' as _i412;
 import 'features/terrain/presentation/bloc/terrain_bloc.dart' as _i13;
@@ -43,17 +48,29 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i1022.FlightPlanBloc>(() => _i1022.FlightPlanBloc());
     gh.factory<_i153.ScratchpadBloc>(() => _i153.ScratchpadBloc());
     gh.lazySingleton<_i234.AppDatabase>(() => _i234.AppDatabase());
-    gh.lazySingleton<_i654.AirspaceService>(() => _i654.AirspaceService());
+    gh.lazySingleton<_i291.OpenAipApiClient>(() => _i291.OpenAipApiClient());
+    gh.lazySingleton<_i381.FleetTrackingService>(
+      () => _i381.FleetTrackingService(),
+    );
     gh.lazySingleton<_i412.TerrainService>(() => _i412.TerrainService());
     gh.lazySingleton<_i12.WeatherService>(() => _i12.WeatherService());
     gh.lazySingleton<_i406.LocationService>(
       () => _i406.GeolocatorLocationService(),
     );
-    gh.factory<_i695.TelemetryBloc>(
-      () => _i695.TelemetryBloc(gh<_i406.LocationService>()),
-    );
     gh.lazySingleton<_i290.TrafficService>(
       () => _i290.OpenSkyTrafficService(gh<_i406.LocationService>()),
+    );
+    gh.lazySingleton<_i654.AirspaceService>(
+      () => _i654.AirspaceService(gh<_i291.OpenAipApiClient>()),
+    );
+    gh.factory<_i695.TelemetryBloc>(
+      () => _i695.TelemetryBloc(
+        gh<_i406.LocationService>(),
+        gh<_i381.FleetTrackingService>(),
+      ),
+    );
+    gh.lazySingleton<_i267.NavigationService>(
+      () => _i871.DefaultNavigationService(),
     );
     gh.lazySingleton<_i969.AirportSeeder>(
       () => _i969.AirportSeeder(gh<_i234.AppDatabase>()),

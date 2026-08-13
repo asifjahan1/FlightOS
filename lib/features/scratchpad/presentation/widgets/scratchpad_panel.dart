@@ -33,10 +33,15 @@ class ScratchpadPanel extends StatelessWidget {
             children: [
               // Header
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.brown.withValues(alpha: 0.1),
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(12),
+                  ),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -52,16 +57,28 @@ class ScratchpadPanel extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.clear_all, color: Colors.brown, size: 20),
+                          icon: const Icon(
+                            Icons.clear_all,
+                            color: Colors.brown,
+                            size: 20,
+                          ),
                           tooltip: 'Clear',
                           onPressed: () {
-                            context.read<ScratchpadBloc>().add(ClearScratchpad());
+                            context.read<ScratchpadBloc>().add(
+                              ClearScratchpad(),
+                            );
                           },
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close, color: Colors.brown, size: 20),
+                          icon: const Icon(
+                            Icons.close,
+                            color: Colors.brown,
+                            size: 20,
+                          ),
                           onPressed: () {
-                            context.read<ScratchpadBloc>().add(ToggleScratchpad());
+                            context.read<ScratchpadBloc>().add(
+                              ToggleScratchpad(),
+                            );
                           },
                         ),
                       ],
@@ -74,18 +91,22 @@ class ScratchpadPanel extends StatelessWidget {
                 padding: const EdgeInsets.all(8),
                 child: TextFormField(
                   initialValue: state.text,
+                  cursorColor: Colors.white,
                   onChanged: (val) {
-                    context.read<ScratchpadBloc>().add(UpdateScratchpadText(val));
+                    context.read<ScratchpadBloc>().add(
+                      UpdateScratchpadText(val),
+                    );
                   },
                   maxLines: 8,
                   style: const TextStyle(
                     fontFamily: 'Courier',
-                    color: Colors.black87,
+                    color: Colors.white,
                     fontSize: 16,
                   ),
                   decoration: const InputDecoration(
                     border: InputBorder.none,
                     hintText: 'Type clearances here...',
+                    hintStyle: TextStyle(color: Colors.white10),
                   ),
                 ),
               ),

@@ -12,11 +12,18 @@ abstract class AirportRepository {
     required double maxLat,
     required double minLon,
     required double maxLon,
+    List<String>? types,
   });
+
+  /// Fetches the nearest airports to a given coordinate.
+  Future<List<Airport>> getNearestAirports(double lat, double lon, int limit);
 
   /// Fetches runways for a specific airport.
   Future<List<Runway>> getRunways(String airportIcao);
 
   /// Fetches frequencies for a specific airport.
   Future<List<Frequency>> getFrequencies(String airportIcao);
+
+  /// Searches for airports by ICAO, IATA, or name.
+  Future<List<Airport>> searchAirports(String query);
 }

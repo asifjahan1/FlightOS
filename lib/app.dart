@@ -1,7 +1,3 @@
-/// SkyNav application root widget.
-///
-/// Configures the MaterialApp with the aviation dark theme,
-/// BLoC providers, and routing.
 library;
 
 import 'package:flutter/material.dart';
@@ -20,7 +16,6 @@ import 'package:skynav/features/traffic/presentation/bloc/traffic_bloc.dart';
 import 'package:skynav/features/weather/presentation/bloc/weather_bloc.dart';
 import 'package:skynav/injection.dart';
 
-/// Root application widget.
 class SkyNavApp extends StatelessWidget {
   const SkyNavApp({super.key});
 
@@ -31,9 +26,7 @@ class SkyNavApp extends StatelessWidget {
         BlocProvider<MapBloc>(
           create: (_) => sl<MapBloc>()..add(const MapInitialized()),
         ),
-        BlocProvider<FlightPlanBloc>(
-          create: (_) => sl<FlightPlanBloc>(),
-        ),
+        BlocProvider<FlightPlanBloc>(create: (_) => sl<FlightPlanBloc>()),
         BlocProvider<TelemetryBloc>(
           create: (_) => sl<TelemetryBloc>()..add(const TelemetryStarted()),
         ),
@@ -41,20 +34,20 @@ class SkyNavApp extends StatelessWidget {
           create: (_) => sl<TrafficBloc>()..add(const TrafficStarted()),
         ),
         BlocProvider<AirspaceBloc>(
-          create: (_) => sl<AirspaceBloc>()..add(AirspacesLoaded()),
+          create: (_) => sl<AirspaceBloc>()
+            ..add(
+              const AirspacesLoaded(
+                latMin: 20.0,
+                lonMin: 88.0,
+                latMax: 27.0,
+                lonMax: 93.0,
+              ),
+            ),
         ),
-        BlocProvider<WeatherBloc>(
-          create: (_) => sl<WeatherBloc>(),
-        ),
-        BlocProvider<TerrainBloc>(
-          create: (_) => sl<TerrainBloc>(),
-        ),
-        BlocProvider<ChecklistBloc>(
-          create: (_) => sl<ChecklistBloc>(),
-        ),
-        BlocProvider<ScratchpadBloc>(
-          create: (_) => sl<ScratchpadBloc>(),
-        ),
+        BlocProvider<WeatherBloc>(create: (_) => sl<WeatherBloc>()),
+        BlocProvider<TerrainBloc>(create: (_) => sl<TerrainBloc>()),
+        BlocProvider<ChecklistBloc>(create: (_) => sl<ChecklistBloc>()),
+        BlocProvider<ScratchpadBloc>(create: (_) => sl<ScratchpadBloc>()),
       ],
       child: MaterialApp(
         title: 'SkyNav',

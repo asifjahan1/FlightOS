@@ -9,6 +9,7 @@ import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:path/path.dart' as p;
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:skynav/core/constants/app_constants.dart';
@@ -110,6 +111,7 @@ LazyDatabase _openConnection() {
 
     final appDir = await getApplicationSupportDirectory();
     final dbPath = p.join(appDir.path, DatabaseConstants.userDb);
+    final dbFile = File(dbPath);
 
     // Ensure the directory exists
     final dbDir = Directory(p.dirname(dbPath));
@@ -117,11 +119,28 @@ LazyDatabase _openConnection() {
       dbDir.createSync(recursive: true);
     }
 
+    if (!dbFile.existsSync()) {
+      try {
+        // Copy the pre-populated airports database from assets
+        // Requires flutter/services.dart, so we must add it.
+        // Wait, rootBundle is in flutter/services.dart
+        // We will just copy the file.
+        // But since this is a desktop app, assets might be in a different path.
+        // Actually, flutter exposes assets via rootBundle.load.
+        final assetData = await rootBundle.load('assets/data/airports.sqlite');
+        final bytes = assetData.buffer.asUint8List(
+          assetData.offsetInBytes,
+          assetData.lengthInBytes,
+        );
+        await dbFile.writeAsBytes(bytes, flush: true);
+      } catch (e) {
+        // Fallback: just let drift create an empty DB
+      }
+    }
+
     return NativeDatabase.createInBackground(
-      File(dbPath),
-      isolateSetup: () {
-        setupSqliteDatabase();
-      },
+      dbFile,
+      isolateSetup: setupSqliteDatabase,
       setup: (db) {
         setupSqliteDatabase();
       },

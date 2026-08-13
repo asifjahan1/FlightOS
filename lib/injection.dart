@@ -4,9 +4,7 @@ import 'package:skynav/injection.config.dart';
 
 final GetIt sl = GetIt.instance;
 
-@InjectableInit(
-  preferRelativeImports: true, // default
-)
+@InjectableInit(preferRelativeImports: true)
 Future<void> configureDependencies() async {
   sl.init();
 }

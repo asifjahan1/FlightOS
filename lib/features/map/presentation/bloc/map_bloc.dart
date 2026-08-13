@@ -66,10 +66,7 @@ class MapLayerToggled extends MapEvent {
 
 /// Center the map on a specific location.
 class MapCenterOnLocation extends MapEvent {
-  const MapCenterOnLocation({
-    required this.location,
-    this.zoom,
-  });
+  const MapCenterOnLocation({required this.location, this.zoom});
 
   final LatLng location;
   final double? zoom;
@@ -145,7 +142,14 @@ class MapReady extends MapState {
   }
 
   @override
-  List<Object?> get props => [center, zoom, bounds, visibleLayers, tilesLoaded, airports];
+  List<Object?> get props => [
+    center,
+    zoom,
+    bounds,
+    visibleLayers,
+    tilesLoaded,
+    airports,
+  ];
 }
 
 /// Map failed to load.
@@ -162,15 +166,12 @@ class MapError extends MapState {
 
 /// Map viewport bounding box.
 class MapBounds extends Equatable {
-  const MapBounds({
-    required this.southWest,
-    required this.northEast,
-  });
+  const MapBounds({required this.southWest, required this.northEast});
 
   /// Creates a default bounds covering the entire world.
   const MapBounds.world()
-      : southWest = const LatLng(-90, -180),
-        northEast = const LatLng(90, 180);
+    : southWest = const LatLng(-90, -180),
+      northEast = const LatLng(90, 180);
 
   final LatLng southWest;
   final LatLng northEast;
@@ -198,7 +199,6 @@ enum MapLayerType {
 /// Map BLoC implementation.
 @injectable
 class MapBloc extends Bloc<MapEvent, MapState> {
-
   MapBloc(this._airportRepository) : super(const MapInitial()) {
     on<MapInitialized>(_onInitialized);
     on<MapMoved>(_onMoved);
@@ -221,53 +221,123 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         MapLayerType.airports,
       };
 
-      emit(MapReady(
-        center: MapConstants.defaultCenter,
-        zoom: MapConstants.defaultZoom,
-        bounds: const MapBounds.world(),
-        visibleLayers: defaultLayers,
-        tilesLoaded: true,
-      ));
+      // Eagerly fetch airports for the default US viewport so they appear
+      // immediately on Android (without waiting for a map-move event).
+      final defaultBounds = MapBounds(
+        southWest: const LatLng(24.0, -125.0),
+        northEast: const LatLng(50.0, -66.0),
+      );
+      var initialAirports = await _fetchInitialAirports(
+        defaultBounds,
+      );
+
+      // If the database returned 0 airports, it might be because
+      // NativeDatabase.createInBackground hasn't finished yet on Android.
+      // Retry once after a short delay.
+      if (initialAirports.isEmpty) {
+        // ignore: avoid_print
+        print('[MapBloc] 0 airports on first try, retrying in 2s...');
+        await Future<void>.delayed(const Duration(seconds: 2));
+        initialAirports = await _fetchInitialAirports(defaultBounds);
+      }
+
+      // ignore: avoid_print
+      print('[MapBloc] Final initial airports: ${initialAirports.length}');
+
+      emit(
+        MapReady(
+          center: MapConstants.defaultCenter,
+          zoom: MapConstants.defaultZoom,
+          bounds: defaultBounds,
+          visibleLayers: defaultLayers,
+          tilesLoaded: true,
+          airports: initialAirports,
+        ),
+      );
     } on Exception catch (e) {
       emit(MapError(message: 'Failed to initialize map: $e'));
     }
   }
 
-  Future<void> _onMoved(
-    MapMoved event,
-    Emitter<MapState> emit,
-  ) async {
+  Future<List<Airport>> _fetchInitialAirports(MapBounds bounds) async {
+    try {
+      final airports = await _airportRepository.getAirportsInBoundingBox(
+        minLat: bounds.southWest.latitude,
+        maxLat: bounds.northEast.latitude,
+        minLon: bounds.southWest.longitude,
+        maxLon: bounds.northEast.longitude,
+        types: ['large_airport'],
+      );
+      // ignore: avoid_print
+      print(
+        '[MapBloc] _fetchInitialAirports: ${airports.length} large airports',
+      );
+      return airports;
+    } catch (e) {
+      // ignore: avoid_print
+      print('[MapBloc] ERROR _fetchInitialAirports: $e');
+      return [];
+    }
+  }
+
+  Future<void> _onMoved(MapMoved event, Emitter<MapState> emit) async {
     final currentState = state;
     if (currentState is MapReady) {
       List<Airport>? newAirports;
 
-      // Only fetch airports if zoomed in enough to prevent clutter/perf issues.
-      if (event.zoom > 6.0 && currentState.visibleLayers.contains(MapLayerType.airports)) {
+      final isAirportsOn = currentState.visibleLayers.contains(
+        MapLayerType.airports,
+      );
+      final isWeatherOn = currentState.visibleLayers.contains(
+        MapLayerType.weather,
+      );
+
+      if (isAirportsOn || isWeatherOn) {
         try {
+          List<String>? typesFilter;
+          if (event.zoom <= 6.0) {
+            typesFilter = ['large_airport'];
+          } else if (event.zoom <= 9.0) {
+            typesFilter = ['large_airport', 'medium_airport'];
+          } else {
+            typesFilter = null; // Show all airports when zoomed in
+          }
+
           newAirports = await _airportRepository.getAirportsInBoundingBox(
             minLat: event.bounds.southWest.latitude,
             maxLat: event.bounds.northEast.latitude,
             minLon: event.bounds.southWest.longitude,
             maxLon: event.bounds.northEast.longitude,
+            types: typesFilter,
           );
-        } catch (_) {
-          // Ignore fetch errors for now
+          // ignore: avoid_print
+          print(
+            '[MapBloc] _onMoved: zoom=${event.zoom.toStringAsFixed(1)}, '
+            'bounds=(${event.bounds.southWest.latitude.toStringAsFixed(2)}, '
+            '${event.bounds.southWest.longitude.toStringAsFixed(2)}) to '
+            '(${event.bounds.northEast.latitude.toStringAsFixed(2)}, '
+            '${event.bounds.northEast.longitude.toStringAsFixed(2)}), '
+            'typesFilter=$typesFilter, '
+            'result=${newAirports.length} airports',
+          );
+        } catch (e) {
+          // ignore: avoid_print
+          print('[MapBloc] ERROR in _onMoved airport fetch: $e');
         }
       }
 
-      emit(currentState.copyWith(
-        center: event.center,
-        zoom: event.zoom,
-        bounds: event.bounds,
-        airports: newAirports,
-      ));
+      emit(
+        currentState.copyWith(
+          center: event.center,
+          zoom: event.zoom,
+          bounds: event.bounds,
+          airports: newAirports,
+        ),
+      );
     }
   }
 
-  void _onLayerToggled(
-    MapLayerToggled event,
-    Emitter<MapState> emit,
-  ) {
+  void _onLayerToggled(MapLayerToggled event, Emitter<MapState> emit) {
     final currentState = state;
     if (currentState is MapReady) {
       final updatedLayers = Set<MapLayerType>.from(currentState.visibleLayers);
@@ -280,23 +350,19 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     }
   }
 
-  void _onCenterOnLocation(
-    MapCenterOnLocation event,
-    Emitter<MapState> emit,
-  ) {
+  void _onCenterOnLocation(MapCenterOnLocation event, Emitter<MapState> emit) {
     final currentState = state;
     if (currentState is MapReady) {
-      emit(currentState.copyWith(
-        center: event.location,
-        zoom: event.zoom ?? currentState.zoom,
-      ));
+      emit(
+        currentState.copyWith(
+          center: event.location,
+          zoom: event.zoom ?? currentState.zoom,
+        ),
+      );
     }
   }
 
-  void _onZoomChanged(
-    MapZoomChanged event,
-    Emitter<MapState> emit,
-  ) {
+  void _onZoomChanged(MapZoomChanged event, Emitter<MapState> emit) {
     final currentState = state;
     if (currentState is MapReady) {
       final clampedZoom = event.zoom.clamp(

@@ -84,10 +84,7 @@ abstract final class AppTheme {
           side: BorderSide(color: border),
         ),
       ),
-      dividerTheme: const DividerThemeData(
-        color: border,
-        thickness: 1,
-      ),
+      dividerTheme: const DividerThemeData(color: border, thickness: 1),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: backgroundTertiary,
@@ -159,10 +156,7 @@ abstract final class AppTheme {
           letterSpacing: 0.5,
         ),
       ),
-      iconTheme: const IconThemeData(
-        color: textSecondary,
-        size: 24,
-      ),
+      iconTheme: const IconThemeData(color: textSecondary, size: 24),
       tooltipTheme: const TooltipThemeData(
         decoration: BoxDecoration(
           color: backgroundTertiary,

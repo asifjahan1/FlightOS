@@ -4,6 +4,7 @@ library;
 import 'package:flutter/material.dart';
 
 import 'package:skynav/core/theme/app_theme.dart';
+import 'package:skynav/core/utils/responsive_layout.dart';
 import 'package:skynav/features/map/presentation/bloc/map_bloc.dart';
 
 /// Floating map controls panel.
@@ -16,6 +17,12 @@ class MapControls extends StatelessWidget {
     required this.onLayerToggle,
     required this.isFollowing,
     required this.onFollowToggle,
+    required this.isDrawMode,
+    required this.onDrawModeToggle,
+    required this.isEmergencyMode,
+    required this.onEmergencyModeToggle,
+    required this.on3DToggle,
+    required this.onClearRoute,
     super.key,
   });
 
@@ -26,100 +33,149 @@ class MapControls extends StatelessWidget {
   final ValueChanged<MapLayerType> onLayerToggle;
   final bool isFollowing;
   final VoidCallback onFollowToggle;
+  final bool isDrawMode;
+  final VoidCallback onDrawModeToggle;
+  final bool isEmergencyMode;
+  final VoidCallback onEmergencyModeToggle;
+  final VoidCallback on3DToggle;
+  final VoidCallback onClearRoute;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // ── Zoom Controls ──
-        _ControlPanel(
-          children: [
-            _ControlButton(
-              icon: Icons.add,
-              tooltip: 'Zoom In',
-              onPressed: onZoomIn,
-            ),
-            const _ControlDivider(),
-            _ControlButton(
-              icon: Icons.remove,
-              tooltip: 'Zoom Out',
-              onPressed: onZoomOut,
-            ),
-          ],
-        ),
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ── Zoom Controls ──
+          _ControlPanel(
+            children: [
+              _ControlButton(
+                icon: Icons.add,
+                tooltip: 'Zoom In',
+                onPressed: onZoomIn,
+              ),
+              const _ControlDivider(),
+              _ControlButton(
+                icon: Icons.remove,
+                tooltip: 'Zoom Out',
+                onPressed: onZoomOut,
+              ),
+            ],
+          ),
 
-        const SizedBox(height: 8),
+          const SizedBox(height: 8),
 
-        // ── Compass & Follow ──
-        _ControlPanel(
-          children: [
-            _LayerToggle(
-              icon: Icons.my_location,
-              label: 'Follow Mode',
-              isActive: isFollowing,
-              onTap: onFollowToggle,
-            ),
-            const _ControlDivider(),
-            _ControlButton(
-              icon: Icons.navigation,
-              tooltip: 'North Up',
-              onPressed: () {
-                // Reset bearing to north (future)
-              },
-            ),
-          ],
-        ),
+          // ── Compass & Follow ──
+          _ControlPanel(
+            children: [
+              _LayerToggle(
+                icon: Icons.my_location,
+                label: 'Follow Mode',
+                isActive: isFollowing,
+                onTap: onFollowToggle,
+              ),
+              const _ControlDivider(),
+              _ControlButton(
+                icon: Icons.navigation,
+                tooltip: 'North Up',
+                onPressed: () {
+                  // Reset bearing to north (future)
+                },
+              ),
+              const _ControlDivider(),
+              _ControlButton(
+                icon: Icons.threed_rotation,
+                tooltip: 'Synthetic Vision (3D)',
+                onPressed: on3DToggle,
+              ),
+            ],
+          ),
 
-        const SizedBox(height: 8),
+          const SizedBox(height: 8),
 
-        // ── Layer Toggle ──
-        _ControlPanel(
-          children: [
-            _LayerToggle(
-              icon: Icons.local_airport,
-              label: 'Airports',
-              isActive: visibleLayers.contains(MapLayerType.airports),
-              onTap: () => onLayerToggle(MapLayerType.airports),
-            ),
-            const _ControlDivider(),
-            _LayerToggle(
-              icon: Icons.map,
-              label: 'VFR Chart',
-              isActive: visibleLayers.contains(MapLayerType.vfrChart),
-              onTap: () => onLayerToggle(MapLayerType.vfrChart),
-            ),
-            const _ControlDivider(),
-            _LayerToggle(
-              icon: Icons.layers,
-              label: 'IFR Low',
-              isActive: visibleLayers.contains(MapLayerType.ifrChart),
-              onTap: () => onLayerToggle(MapLayerType.ifrChart),
-            ),
-            const _ControlDivider(),
-            _LayerToggle(
-              icon: Icons.terrain,
-              label: 'Terrain',
-              isActive: visibleLayers.contains(MapLayerType.terrain),
-              onTap: () => onLayerToggle(MapLayerType.terrain),
-            ),
-            const _ControlDivider(),
-            _LayerToggle(
-              icon: Icons.cloud,
-              label: 'Weather',
-              isActive: visibleLayers.contains(MapLayerType.weather),
-              onTap: () => onLayerToggle(MapLayerType.weather),
-            ),
-            const _ControlDivider(),
-            _LayerToggle(
-              icon: Icons.people,
-              label: 'Traffic',
-              isActive: visibleLayers.contains(MapLayerType.traffic),
-              onTap: () => onLayerToggle(MapLayerType.traffic),
-            ),
-          ],
-        ),
-      ],
+          // ── Route Controls ──
+          _ControlPanel(
+            children: [
+              _LayerToggle(
+                icon: Icons.edit_location_alt,
+                label: 'Draw Route',
+                isActive: isDrawMode,
+                onTap: onDrawModeToggle,
+              ),
+              const _ControlDivider(),
+              _ControlButton(
+                icon: Icons.delete_outline,
+                tooltip: 'Clear Route',
+                onPressed: onClearRoute,
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 8),
+
+          // ── Emergency Controls ──
+          _ControlPanel(
+            children: [
+              _LayerToggle(
+                icon: Icons.warning,
+                label: 'NRST / Emergency',
+                isActive: isEmergencyMode,
+                onTap: onEmergencyModeToggle,
+                activeColor: AppTheme.error,
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 8),
+
+          // ── Layer Toggle ──
+          _ControlPanel(
+            children: [
+              _LayerToggle(
+                icon: Icons.local_airport,
+                label: 'Airports',
+                isActive: visibleLayers.contains(MapLayerType.airports),
+                onTap: () => onLayerToggle(MapLayerType.airports),
+              ),
+              const _ControlDivider(),
+              _LayerToggle(
+                icon: Icons.map,
+                label: 'VFR Chart',
+                isActive: visibleLayers.contains(MapLayerType.vfrChart),
+                onTap: () => onLayerToggle(MapLayerType.vfrChart),
+              ),
+              const _ControlDivider(),
+              _LayerToggle(
+                icon: Icons.layers,
+                label: 'IFR Low',
+                isActive: visibleLayers.contains(MapLayerType.ifrChart),
+                onTap: () => onLayerToggle(MapLayerType.ifrChart),
+              ),
+              const _ControlDivider(),
+              _LayerToggle(
+                icon: Icons.terrain,
+                label: 'Terrain',
+                isActive: visibleLayers.contains(MapLayerType.terrain),
+                onTap: () => onLayerToggle(MapLayerType.terrain),
+              ),
+              const _ControlDivider(),
+              _LayerToggle(
+                icon: Icons.cloud,
+                label: 'Weather',
+                isActive: visibleLayers.contains(MapLayerType.weather),
+                onTap: () => onLayerToggle(MapLayerType.weather),
+              ),
+              const _ControlDivider(),
+              _LayerToggle(
+                icon: Icons.people,
+                label: 'Traffic',
+                isActive: visibleLayers.contains(MapLayerType.traffic),
+                onTap: () => onLayerToggle(MapLayerType.traffic),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -145,10 +201,7 @@ class _ControlPanel extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: children,
-      ),
+      child: Column(mainAxisSize: MainAxisSize.min, children: children),
     );
   }
 }
@@ -167,17 +220,18 @@ class _ControlButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isPhone = ResponsiveLayout.isPhone(context);
     return Tooltip(
       message: tooltip,
       child: InkWell(
         onTap: onPressed,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(8),
         child: Padding(
-          padding: const EdgeInsets.all(10),
+          padding: EdgeInsets.all(isPhone ? 12 : 18),
           child: Icon(
             icon,
             color: AppTheme.textPrimary,
-            size: 20,
+            size: isPhone ? 24 : 28,
           ),
         ),
       ),
@@ -192,26 +246,29 @@ class _LayerToggle extends StatelessWidget {
     required this.label,
     required this.isActive,
     required this.onTap,
+    this.activeColor,
   });
 
   final IconData icon;
   final String label;
   final bool isActive;
   final VoidCallback onTap;
+  final Color? activeColor;
 
   @override
   Widget build(BuildContext context) {
+    final isPhone = ResponsiveLayout.isPhone(context);
     return Tooltip(
       message: label,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(8),
         child: Padding(
-          padding: const EdgeInsets.all(10),
+          padding: EdgeInsets.all(isPhone ? 12 : 18),
           child: Icon(
             icon,
-            color: isActive ? AppTheme.accentPrimary : AppTheme.textTertiary,
-            size: 20,
+            color: isActive ? (activeColor ?? AppTheme.accentPrimary) : AppTheme.textTertiary,
+            size: isPhone ? 24 : 28,
           ),
         ),
       ),
@@ -225,10 +282,6 @@ class _ControlDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 1,
-      width: 28,
-      color: AppTheme.border,
-    );
+    return Container(height: 1, width: 28, color: AppTheme.border);
   }
 }

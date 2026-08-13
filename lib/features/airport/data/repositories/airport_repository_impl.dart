@@ -1,6 +1,7 @@
 import 'package:injectable/injectable.dart';
 import 'package:skynav/core/database/daos/airport_dao.dart';
 import 'package:skynav/core/database/database.dart';
+import 'package:skynav/core/utils/nav_math.dart';
 import 'package:skynav/features/airport/domain/entities/airport.dart';
 import 'package:skynav/features/airport/domain/entities/frequency.dart';
 import 'package:skynav/features/airport/domain/entities/runway.dart';
@@ -8,7 +9,6 @@ import 'package:skynav/features/airport/domain/repositories/airport_repository.d
 
 @LazySingleton(as: AirportRepository)
 class AirportRepositoryImpl implements AirportRepository {
-
   AirportRepositoryImpl(AppDatabase db) : _dao = db.airportDao;
   final AirportDao _dao;
 
@@ -25,14 +25,36 @@ class AirportRepositoryImpl implements AirportRepository {
     required double maxLat,
     required double minLon,
     required double maxLon,
+    List<String>? types,
   }) async {
     final list = await _dao.getAirportsInBoundingBox(
       minLat: minLat,
       maxLat: maxLat,
       minLon: minLon,
       maxLon: maxLon,
+      types: types,
     );
     return list.map(_mapAirport).toList();
+  }
+
+  @override
+  Future<List<Airport>> getNearestAirports(double lat, double lon, int limit) async {
+    const boxSize = 1.0; // roughly 60nm
+    final list = await _dao.getAirportsInBoundingBox(
+      minLat: lat - boxSize,
+      maxLat: lat + boxSize,
+      minLon: lon - boxSize,
+      maxLon: lon + boxSize,
+    );
+    
+    final mapped = list.map(_mapAirport).toList();
+    mapped.sort((a, b) {
+       final distA = NavMath.distanceNm(lat, lon, a.latitude, a.longitude);
+       final distB = NavMath.distanceNm(lat, lon, b.latitude, b.longitude);
+       return distA.compareTo(distB);
+    });
+    
+    return mapped.take(limit).toList();
   }
 
   @override
@@ -47,6 +69,12 @@ class AirportRepositoryImpl implements AirportRepository {
     return list.map(_mapFrequency).toList();
   }
 
+  @override
+  Future<List<Airport>> searchAirports(String query) async {
+    final list = await _dao.searchAirports(query);
+    return list.map(_mapAirport).toList();
+  }
+
   // --- Mappers ---
 
   Airport _mapAirport(AirportData data) {
@@ -58,6 +86,8 @@ class AirportRepositoryImpl implements AirportRepository {
       longitude: data.longitude,
       elevation: data.elevation,
       type: data.type,
+      municipality: data.municipality,
+      countryCode: data.countryCode,
     );
   }
 

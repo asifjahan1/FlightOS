@@ -92,8 +92,7 @@ class AircraftState extends Equatable {
 
   /// Whether GPS data is considered reliable.
   bool get isGpsReliable =>
-      source != TelemetrySource.none &&
-      (hdop == null || hdop! < 5.0);
+      source != TelemetrySource.none && (hdop == null || hdop! < 5.0);
 
   /// Age of this telemetry data.
   Duration get age => DateTime.now().difference(timestamp);

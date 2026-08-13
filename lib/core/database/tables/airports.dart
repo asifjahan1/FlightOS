@@ -9,6 +9,8 @@ class Airports extends Table {
   RealColumn get longitude => real()();
   RealColumn get elevation => real()(); // in feet
   TextColumn get type => text()();
+  TextColumn get municipality => text().nullable()();
+  TextColumn get countryCode => text()();
 
   @override
   Set<Column> get primaryKey => {icao};

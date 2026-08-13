@@ -11,11 +11,7 @@ sealed class WeatherState extends Equatable {
 class WeatherInitial extends WeatherState {}
 
 class WeatherLoaded extends WeatherState {
-
-  const WeatherLoaded({
-    required this.reports,
-    this.isRadarVisible = false,
-  });
+  const WeatherLoaded({required this.reports, this.isRadarVisible = false});
   final Map<String, WeatherReport> reports;
   final bool isRadarVisible;
 

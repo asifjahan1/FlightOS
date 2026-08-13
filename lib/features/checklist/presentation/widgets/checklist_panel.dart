@@ -35,7 +35,10 @@ class ChecklistPanel extends StatelessWidget {
             children: [
               // Header
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: const BoxDecoration(
                   border: Border(bottom: BorderSide(color: Colors.white12)),
                 ),
@@ -53,7 +56,9 @@ class ChecklistPanel extends StatelessWidget {
                     IconButton(
                       icon: const Icon(Icons.close, color: Colors.white70),
                       onPressed: () {
-                        context.read<ChecklistBloc>().add(ToggleChecklistPanel());
+                        context.read<ChecklistBloc>().add(
+                          ToggleChecklistPanel(),
+                        );
                       },
                     ),
                   ],
@@ -64,7 +69,10 @@ class ChecklistPanel extends StatelessWidget {
                 height: 50,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 8,
+                  ),
                   itemCount: state.checklists.length,
                   itemBuilder: (context, index) {
                     final checklist = state.checklists[index];
@@ -76,7 +84,9 @@ class ChecklistPanel extends StatelessWidget {
                         selected: isActive,
                         onSelected: (selected) {
                           if (selected) {
-                            context.read<ChecklistBloc>().add(SelectChecklist(index));
+                            context.read<ChecklistBloc>().add(
+                              SelectChecklist(index),
+                            );
                           }
                         },
                       ),
@@ -92,29 +102,40 @@ class ChecklistPanel extends StatelessWidget {
                   itemCount: activeChecklist.items.length,
                   itemBuilder: (context, index) {
                     final item = activeChecklist.items[index];
-                    return CheckboxListTile(
-                      title: Text(
-                        item.title,
-                        style: TextStyle(
-                          color: item.isCompleted ? Colors.white54 : Colors.white,
-                          decoration: item.isCompleted ? TextDecoration.lineThrough : null,
+                    return Material(
+                      color: Colors.transparent,
+                      child: CheckboxListTile(
+                        title: Text(
+                          item.title,
+                          style: TextStyle(
+                            color: item.isCompleted
+                                ? Colors.white54
+                                : Colors.white,
+                            decoration: item.isCompleted
+                                ? TextDecoration.lineThrough
+                                : null,
+                          ),
                         ),
+                        subtitle: item.action != null
+                            ? Text(
+                                item.action!,
+                                style: TextStyle(
+                                  color: item.isCompleted
+                                      ? Colors.blue.withValues(alpha: 0.5)
+                                      : Colors.blue,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              )
+                            : null,
+                        value: item.isCompleted,
+                        onChanged: (value) {
+                          context.read<ChecklistBloc>().add(
+                            ToggleChecklistItem(activeChecklist.id, item.id),
+                          );
+                        },
+                        activeColor: Colors.blue,
+                        checkColor: Colors.white,
                       ),
-                      subtitle: item.action != null
-                          ? Text(
-                              item.action!,
-                              style: TextStyle(
-                                color: item.isCompleted ? Colors.blue.withValues(alpha: 0.5) : Colors.blue,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            )
-                          : null,
-                      value: item.isCompleted,
-                      onChanged: (value) {
-                        context.read<ChecklistBloc>().add(ToggleChecklistItem(activeChecklist.id, item.id));
-                      },
-                      activeColor: Colors.blue,
-                      checkColor: Colors.white,
                     );
                   },
                 ),

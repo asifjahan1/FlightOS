@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:skynav/features/telemetry/presentation/bloc/telemetry_bloc.dart';
 
 class TelemetryPanel extends StatelessWidget {
@@ -20,11 +21,51 @@ class TelemetryPanel extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildGauge('GS', state.data.groundSpeedKnots.toStringAsFixed(0), 'KT'),
+                _buildGauge(
+                  'GS',
+                  state.data.groundSpeedKnots.toStringAsFixed(0),
+                  'KT',
+                ),
                 const Divider(color: Colors.white24, height: 24),
-                _buildGauge('TRK', state.data.trueTrack.toStringAsFixed(0).padLeft(3, '0'), '°'),
+                _buildGauge(
+                  'TRK',
+                  state.data.trueTrack.toStringAsFixed(0).padLeft(3, '0'),
+                  '°',
+                ),
                 const Divider(color: Colors.white24, height: 24),
-                _buildGauge('ALT', state.data.altitudeMslFeet.toStringAsFixed(0), 'FT'),
+                _buildGauge(
+                  'ALT',
+                  state.data.altitudeMslFeet.toStringAsFixed(0),
+                  'FT',
+                ),
+                if (state.data.destinationLatitude != null &&
+                    state.data.destinationLongitude != null) ...[
+                  const Divider(color: Colors.white24, height: 24),
+                  GestureDetector(
+                    onLongPress: () {
+                      context.read<TelemetryBloc>().add(
+                        const TelemetryDestinationCleared(),
+                      );
+                    },
+                    child: _buildGauge(
+                      'DTG',
+                      (const Distance().as(
+                                LengthUnit.Meter,
+                                LatLng(
+                                  state.data.latitude,
+                                  state.data.longitude,
+                                ),
+                                LatLng(
+                                  state.data.destinationLatitude!,
+                                  state.data.destinationLongitude!,
+                                ),
+                              ) /
+                              1852.0)
+                          .toStringAsFixed(1),
+                      'NM',
+                    ),
+                  ),
+                ],
               ],
             ),
           );
