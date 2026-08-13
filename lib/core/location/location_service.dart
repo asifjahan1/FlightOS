@@ -159,21 +159,25 @@ class GeolocatorLocationService implements LocationService {
 
     void emitDeadReckonedPosition() {
       if (lastKnown == null) return;
+      final current = lastKnown!;
       // Calculate 1-second distance based on last known speed
-      final distMeters = (lastKnown!.groundSpeedKnots / 1.94384) * 1.0; 
-      final latOffset = (distMeters * math.cos(lastKnown!.trueTrack * math.pi / 180)) / 111320.0;
-      final lonOffset = (distMeters * math.sin(lastKnown!.trueTrack * math.pi / 180)) /
-          (111320.0 * math.cos(lastKnown!.latitude * math.pi / 180));
+      final distMeters = (current.groundSpeedKnots / 1.94384) * 1.0;
+      final latOffset =
+          (distMeters * math.cos(current.trueTrack * math.pi / 180)) / 111320.0;
+      final lonOffset =
+          (distMeters * math.sin(current.trueTrack * math.pi / 180)) /
+          (111320.0 * math.cos(current.latitude * math.pi / 180));
 
-      lastKnown = TelemetryData(
-        latitude: lastKnown!.latitude + latOffset,
-        longitude: lastKnown!.longitude + lonOffset,
-        altitudeMslFeet: lastKnown!.altitudeMslFeet,
-        groundSpeedKnots: lastKnown!.groundSpeedKnots,
-        trueTrack: lastKnown!.trueTrack,
+      final updatedData = TelemetryData(
+        latitude: current.latitude + latOffset,
+        longitude: current.longitude + lonOffset,
+        altitudeMslFeet: current.altitudeMslFeet,
+        groundSpeedKnots: current.groundSpeedKnots,
+        trueTrack: current.trueTrack,
         accuracyMeters: 999, // 999 indicates offline simulated dead reckoning
       );
-      controller.add(lastKnown);
+      lastKnown = updatedData;
+      controller.add(updatedData);
     }
 
     void startDeadReckoning() {
@@ -197,7 +201,7 @@ class GeolocatorLocationService implements LocationService {
         ),
       ).listen(
         (Position pos) {
-          lastKnown = TelemetryData(
+          final telemetry = TelemetryData(
             latitude: pos.latitude,
             longitude: pos.longitude,
             altitudeMslFeet: pos.altitude * 3.28084,
@@ -205,7 +209,8 @@ class GeolocatorLocationService implements LocationService {
             trueTrack: pos.heading,
             accuracyMeters: pos.accuracy,
           );
-          controller.add(lastKnown);
+          lastKnown = telemetry;
+          controller.add(telemetry);
           resetTimeout();
         },
         onError: (e) {

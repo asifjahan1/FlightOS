@@ -43,7 +43,7 @@ class WeatherService {
     for (final id in airportIds) {
       if (_cache.containsKey(id) &&
           DateTime.now().difference(_cache[id]!.timestamp).inMinutes < 15) {
-        results.add(_cache[id]);
+        results.add(_cache[id]!);
       } else {
         idsToFetch.add(id);
       }

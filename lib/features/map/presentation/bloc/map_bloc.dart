@@ -223,9 +223,9 @@ class MapBloc extends Bloc<MapEvent, MapState> {
 
       // Eagerly fetch airports for the default US viewport so they appear
       // immediately on Android (without waiting for a map-move event).
-      final defaultBounds = MapBounds(
-        southWest: const LatLng(24.0, -125.0),
-        northEast: const LatLng(50.0, -66.0),
+      const defaultBounds = MapBounds(
+        southWest: LatLng(24, -125),
+        northEast: LatLng(50, -66),
       );
       var initialAirports = await _fetchInitialAirports(
         defaultBounds,

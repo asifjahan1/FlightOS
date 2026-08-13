@@ -54,7 +54,7 @@ class _AirportDetailsPanelState extends State<AirportDetailsPanel> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
@@ -118,8 +118,8 @@ class _AirportDetailsPanelState extends State<AirportDetailsPanel> {
               const Text('No facilities found nearby.')
             else
               Wrap(
-                spacing: 8.0,
-                runSpacing: 4.0,
+                spacing: 8,
+                runSpacing: 4,
                 children: _facilities!
                     .map(
                       (f) => Chip(

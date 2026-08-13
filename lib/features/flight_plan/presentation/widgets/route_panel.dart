@@ -19,6 +19,7 @@ class _RoutePanelState extends State<RoutePanel> {
   final NavigationService _navService = GetIt.I<NavigationService>();
   int _currentLegIndex = 0;
 
+  @override
   Widget build(BuildContext context) {
     return BlocBuilder<FlightPlanBloc, FlightPlanState>(
       builder: (context, state) {
@@ -30,7 +31,7 @@ class _RoutePanelState extends State<RoutePanel> {
 
         return BlocBuilder<TelemetryBloc, TelemetryState>(
           builder: (context, telemetryState) {
-            double currentSpeed = plan.cruiseSpeedKnots;
+            var currentSpeed = plan.cruiseSpeedKnots;
             RouteProgress? progress;
             if (telemetryState is TelemetryActive) {
               if (telemetryState.data.groundSpeedKnots > 0) {
