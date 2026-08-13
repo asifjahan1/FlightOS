@@ -5,7 +5,7 @@ void main() {
   final file = File('assets/data/airports_seed.json');
   final jsonList = jsonDecode(file.readAsStringSync()) as List<dynamic>;
   
-  int count = 0;
+  var count = 0;
   for (final item in jsonList) {
     if (item['type'] == 'large_airport') {
       final lat = item['latitude'] as double;

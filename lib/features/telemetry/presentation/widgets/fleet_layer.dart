@@ -38,7 +38,7 @@ class _FleetLayerState extends State<FleetLayer> {
         final polylines = <Polyline>[];
         final markers = <Marker>[];
 
-        for (final target in targets) {
+        for (final target in targets!) {
           // If the location is older than 5 minutes, consider it stale (faded)
           final isStale =
               DateTime.now().difference(target.updatedAt).inMinutes > 5;

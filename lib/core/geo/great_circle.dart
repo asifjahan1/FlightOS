@@ -315,7 +315,7 @@ abstract final class GreatCircle {
           ? 0
           : cosSigma - 2 * sinU1 * sinU2 / cos2Alpha;
 
-      const c = f / 16 * cos2Alpha * (4 + f * (4 - 3 * cos2Alpha));
+      final c = f / 16 * cos2Alpha * (4 + f * (4 - 3 * cos2Alpha));
 
       prevLambda = lambda;
       lambda =
@@ -360,7 +360,7 @@ abstract final class GreatCircle {
                         (-3 + 4 * sinSigma * sinSigma) *
                         (-3 + 4 * cos2SigmaM * cos2SigmaM)));
 
-    const s = b * bigA * (sigma - deltaSigma);
+    final s = b * bigA * (sigma - deltaSigma);
 
     return _VincentyResult(
       distanceMeters: s,

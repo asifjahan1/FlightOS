@@ -37,10 +37,10 @@ class SkyNavApp extends StatelessWidget {
           create: (_) => sl<AirspaceBloc>()
             ..add(
               const AirspacesLoaded(
-                latMin: 20.0,
-                lonMin: 88.0,
-                latMax: 27.0,
-                lonMax: 93.0,
+                latMin: 20,
+                lonMin: 88,
+                latMax: 27,
+                lonMax: 93,
               ),
             ),
         ),

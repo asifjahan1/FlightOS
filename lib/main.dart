@@ -92,7 +92,7 @@ void _initSupabaseInBackground() {
         debugPrint('Supabase credentials missing — skipping init.');
         return;
       }
-      await Supabase.initialize(url: url, anonKey: key);
+      await Supabase.initialize(url: url, publishableKey: key);
       debugPrint('Supabase initialized (no auth required).');
     } catch (e) {
       debugPrint('Supabase initialization failed (non-blocking): $e');

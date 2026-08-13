@@ -8,10 +8,10 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
-import 'package:path/path.dart' as p;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-
 import 'package:skynav/core/constants/app_constants.dart';
 import 'package:skynav/core/database/connection.dart';
 import 'package:skynav/database/daos/airport_dao.dart';
@@ -120,7 +120,7 @@ LazyDatabase _openConnection() {
     }
 
     if (!dbFile.existsSync() || dbFile.lengthSync() < 1000000) {
-      print(
+      debugPrint(
         '[AppDatabase] Copying database from assets (current size: ${dbFile.existsSync() ? dbFile.lengthSync() : 0})...',
       );
       try {
@@ -134,15 +134,15 @@ LazyDatabase _openConnection() {
           dbFile.deleteSync();
         }
         await dbFile.writeAsBytes(bytes, flush: true);
-        print(
+        debugPrint(
           '[AppDatabase] Successfully copied database! Size: ${dbFile.lengthSync()}',
         );
       } catch (e, stack) {
-        print('[AppDatabase] ERROR copying database: $e\n$stack');
+        debugPrint('[AppDatabase] ERROR copying database: $e\n$stack');
         // Fallback: just let drift create an empty DB
       }
     } else {
-      print(
+      debugPrint(
         '[AppDatabase] Database already exists and is large enough (${dbFile.lengthSync()} bytes). Skipping copy.',
       );
     }
