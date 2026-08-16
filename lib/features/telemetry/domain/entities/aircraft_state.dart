@@ -18,6 +18,9 @@ enum TelemetrySource {
   /// Wi-Fi EFB device (GDL90 protocol).
   gdl90,
 
+  /// Bluetooth Low Energy (BLE) cockpit device.
+  bluetooth,
+
   /// Simulated data (for development).
   simulated,
 

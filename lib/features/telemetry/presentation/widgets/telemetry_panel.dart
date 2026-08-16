@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:skynav/features/bluetooth/presentation/bloc/bluetooth_bloc.dart';
 import 'package:skynav/features/telemetry/presentation/bloc/telemetry_bloc.dart';
 
 class TelemetryPanel extends StatelessWidget {
@@ -21,6 +22,42 @@ class TelemetryPanel extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // ── BLE data source indicator ──
+                BlocBuilder<BluetoothBloc, BluetoothState>(
+                  builder: (context, btState) {
+                    if (btState is BluetoothConnected) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: const BoxDecoration(
+                                color: Colors.greenAccent,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                btState.device.displayName,
+                                style: const TextStyle(
+                                  color: Colors.cyanAccent,
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
                 _buildGauge(
                   'GS',
                   state.data.groundSpeedKnots.toStringAsFixed(0),

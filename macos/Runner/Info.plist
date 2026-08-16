@@ -34,5 +34,7 @@
 	<string>SkyNav needs access to location for map telemetry.</string>
 	<key>NSLocationUsageDescription</key>
 	<string>SkyNav needs access to location for map telemetry.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>SkyNav uses Bluetooth to connect to cockpit avionics and receive real-time flight data.</string>
 </dict>
 </plist>

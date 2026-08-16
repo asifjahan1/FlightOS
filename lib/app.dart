@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skynav/core/theme/app_theme.dart';
 import 'package:skynav/features/airspace/presentation/bloc/airspace_bloc.dart';
 import 'package:skynav/features/airspace/presentation/bloc/airspace_event.dart';
+import 'package:skynav/features/bluetooth/presentation/bloc/bluetooth_bloc.dart';
 import 'package:skynav/features/checklist/presentation/bloc/checklist_bloc.dart';
 import 'package:skynav/features/flight_plan/presentation/bloc/flight_plan_bloc.dart';
 import 'package:skynav/features/map/presentation/bloc/map_bloc.dart';
@@ -48,6 +49,9 @@ class SkyNavApp extends StatelessWidget {
         BlocProvider<TerrainBloc>(create: (_) => sl<TerrainBloc>()),
         BlocProvider<ChecklistBloc>(create: (_) => sl<ChecklistBloc>()),
         BlocProvider<ScratchpadBloc>(create: (_) => sl<ScratchpadBloc>()),
+        BlocProvider<BluetoothBloc>(
+          create: (_) => sl<BluetoothBloc>()..add(const BluetoothStarted()),
+        ),
       ],
       child: MaterialApp(
         title: 'SkyNav',

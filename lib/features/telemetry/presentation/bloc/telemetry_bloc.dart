@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:skynav/core/location/location_service.dart';
+import 'package:skynav/features/bluetooth/domain/entities/cockpit_telemetry.dart';
 import 'package:skynav/features/telemetry/data/services/fleet_tracking_service.dart';
 import 'package:skynav/features/telemetry/domain/entities/telemetry_data.dart';
 
@@ -41,6 +42,18 @@ class TelemetryDestinationSet extends TelemetryEvent {
 
 class TelemetryDestinationCleared extends TelemetryEvent {
   const TelemetryDestinationCleared();
+}
+
+/// Merge cockpit data from Bluetooth into telemetry.
+///
+/// When BLE cockpit data is available, it supplements/overrides GPS
+/// data with higher-quality instrument readings (airspeed, altitude, etc.).
+class TelemetryBleCockpitDataMerged extends TelemetryEvent {
+  const TelemetryBleCockpitDataMerged(this.cockpitData);
+  final CockpitTelemetry cockpitData;
+
+  @override
+  List<Object?> get props => [cockpitData];
 }
 
 // ── States ──
@@ -82,6 +95,7 @@ class TelemetryBloc extends Bloc<TelemetryEvent, TelemetryState> {
     on<TelemetryFollowToggled>(_onFollowToggled);
     on<TelemetryDestinationSet>(_onDestinationSet);
     on<TelemetryDestinationCleared>(_onDestinationCleared);
+    on<TelemetryBleCockpitDataMerged>(_onBleCockpitData);
   }
 
   final LocationService _locationService;
@@ -151,6 +165,55 @@ class TelemetryBloc extends Bloc<TelemetryEvent, TelemetryState> {
       final newData = active.data.copyWith(clearDestination: true);
       emit(active.copyWith(data: newData));
       _fleetTrackingService.broadcastLocation(newData);
+    }
+  }
+
+  /// Merges Bluetooth cockpit data into the current telemetry state.
+  ///
+  /// BLE cockpit data overrides GPS values for fields it provides (altitude,
+  /// airspeed, heading), since cockpit instruments are more accurate than
+  /// phone GPS. Fields not provided by the cockpit device are preserved
+  /// from the existing GPS telemetry.
+  void _onBleCockpitData(
+    TelemetryBleCockpitDataMerged event,
+    Emitter<TelemetryState> emit,
+  ) {
+    final cockpit = event.cockpitData;
+
+    if (state is TelemetryActive) {
+      final active = state as TelemetryActive;
+      final current = active.data;
+
+      // Override GPS data with cockpit instrument data where available
+      final merged = current.copyWith(
+        latitude: cockpit.latitude ?? current.latitude,
+        longitude: cockpit.longitude ?? current.longitude,
+        altitudeMslFeet: cockpit.altitudeMslFeet ?? current.altitudeMslFeet,
+        groundSpeedKnots: cockpit.groundSpeedKnots ?? current.groundSpeedKnots,
+        trueTrack: cockpit.trackTrueDeg ??
+            cockpit.headingTrueDeg ??
+            cockpit.headingMagneticDeg ??
+            current.trueTrack,
+      );
+
+      emit(active.copyWith(data: merged));
+      _fleetTrackingService.broadcastLocation(merged);
+    } else {
+      // No GPS data yet — create telemetry from cockpit data alone
+      if (cockpit.latitude != null && cockpit.longitude != null) {
+        final data = TelemetryData(
+          latitude: cockpit.latitude!,
+          longitude: cockpit.longitude!,
+          altitudeMslFeet: cockpit.altitudeMslFeet ?? 0,
+          groundSpeedKnots: cockpit.groundSpeedKnots ?? 0,
+          trueTrack: cockpit.trackTrueDeg ??
+              cockpit.headingTrueDeg ??
+              cockpit.headingMagneticDeg ??
+              0,
+        );
+        emit(TelemetryActive(data: data));
+        _fleetTrackingService.broadcastLocation(data);
+      }
     }
   }
 

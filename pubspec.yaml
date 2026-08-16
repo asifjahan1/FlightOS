@@ -65,6 +65,9 @@ dependencies:
   csv: ^8.0.0
   flutter_dotenv: ^6.0.1
   flutter_map_maplibre: ^0.0.2
+
+  # ── Bluetooth Low Energy (BLE) ──
+  flutter_blue_plus: ^2.3.12
 dev_dependencies:
   flutter_test:
     sdk: flutter
