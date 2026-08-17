@@ -3,7 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'package:skynav/features/bluetooth/domain/entities/cockpit_telemetry.dart';
+// import 'package:skynav/features/bluetooth/domain/entities/cockpit_telemetry.dart';
 import 'package:skynav/features/bluetooth/presentation/bloc/bluetooth_bloc.dart';
 import 'package:skynav/features/bluetooth/presentation/widgets/device_list_sheet.dart';
 
@@ -74,9 +74,7 @@ class CockpitDataOverlay extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.black.withValues(alpha: 0.75),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: Colors.cyanAccent.withValues(alpha: 0.25),
-          ),
+          border: Border.all(color: Colors.cyanAccent.withValues(alpha: 0.25)),
           boxShadow: [
             BoxShadow(
               color: Colors.cyanAccent.withValues(alpha: 0.08),
@@ -112,7 +110,8 @@ class CockpitDataOverlay extends StatelessWidget {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (data.groundSpeedKnots != null || data.trueAirspeedKnots != null)
+                if (data.groundSpeedKnots != null ||
+                    data.trueAirspeedKnots != null)
                   _buildGauge(
                     'SPD',
                     (data.trueAirspeedKnots ?? data.groundSpeedKnots)!
@@ -136,8 +135,8 @@ class CockpitDataOverlay extends StatelessWidget {
                     valueColor: data.verticalSpeedFpm! > 100
                         ? Colors.greenAccent
                         : data.verticalSpeedFpm! < -100
-                            ? Colors.redAccent
-                            : Colors.white,
+                        ? Colors.redAccent
+                        : Colors.white,
                   ),
                 ],
               ],
@@ -175,11 +174,7 @@ class CockpitDataOverlay extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (data.engineRpm != null)
-                    _buildGauge(
-                      'RPM',
-                      data.engineRpm!.toStringAsFixed(0),
-                      '',
-                    ),
+                    _buildGauge('RPM', data.engineRpm!.toStringAsFixed(0), ''),
                   if (data.fuelFlowGph != null) ...[
                     _verticalDivider(),
                     _buildGauge(
